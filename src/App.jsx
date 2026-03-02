@@ -33,7 +33,7 @@ const VJS_I=[
   {id:6,cod:"VJ-2026-0006",fP:"2026-02-28",fS:null,fL:null,tr:8,con:4,ruta:8,cli:6,serv:"LOCAL",peso:32,carga:"Eq.Mineros",est:"PROGRAMADO",bolsa:{pen:0,usd:0,tcUsd:0,totalPen:0},gastos:[],ingresos:[]},
 ];
 const DOCS_I=[{id:1,tipo:"GUIA_REM",nro:"T001-125",fecha:"2026-02-10",ent:"NTF",ref:"VJ-0001",desc:"Guía CHI-GYQ",arch:"GR_125.pdf"},{id:2,tipo:"FACT_EXT",nro:"001-045892",fecha:"2026-02-10",ent:"PetroEcuador",ref:"LOT-001",desc:"Fact.comb.Ecuador",arch:"FACT_892.pdf"},{id:3,tipo:"FACTURA",nro:"F001-00234",fecha:"2026-02-13",ent:"NTF→TransAndina",ref:"VJ-0001",desc:"Fact.transporte",arch:"F001-234.pdf"},{id:4,tipo:"FACTURA",nro:"F001-00235",fecha:"2026-02-18",ent:"NTF→TransAndina",ref:"VJ-0002",desc:"Fact.transporte",arch:"F001-235.pdf"},{id:5,tipo:"FACTURA",nro:"F001-00236",fecha:"2026-02-21",ent:"NTF→Cementos",ref:"VJ-0003",desc:"Fact.local",arch:"F001-236.pdf"},{id:6,tipo:"DOC_INT",nro:"DI-00015",fecha:"2026-02-20",ent:"NTF int.",ref:"VJ-0004",desc:"Pend.facturar",arch:null},{id:7,tipo:"BOLETA",nro:"B001-456",fecha:"2026-02-11",ent:"Varios",ref:"VJ-0001",desc:"Alimentación",arch:"BOL_456.jpg"}];
-const KCOLS=[{k:"PROGRAMADO",l:"Programado",i:"📋",c:"#818CF8"},{k:"EN_RUTA",l:"En Ruta",i:"🚛",c:"#F59E0B"},{k:"FINALIZADO",l:"Finalizado",i:"✅",c:"#34D399"},{k:"CANCELADO",l:"Cancelado",i:"❌",c:"#6B7280"}];
+const KCOLS=[{k:"PROGRAMADO",l:"Programado",i:"📋",c:"#818CF8"},{k:"ESPERA_CARGA",l:"Espera Carga",i:"⏳",c:"#A78BFA"},{k:"EN_RUTA",l:"En Ruta",i:"🚛",c:"#F59E0B"},{k:"MANTENIMIENTO",l:"Mantenimiento",i:"🔧",c:"#F87171"},{k:"SIN_MOVIMIENTO",l:"Sin Movimiento",i:"⛔",c:"#6B7280"},{k:"FINALIZADO",l:"Finalizado",i:"✅",c:"#34D399"},{k:"CANCELADO",l:"Cancelado",i:"❌",c:"#6B7280"}];
 function calcL(v){const tG=v.gastos.reduce((s,g)=>s+g.base,0),tGI=v.gastos.reduce((s,g)=>s+g.tot,0),cP=v.gastos.filter(g=>g.cat.includes("Comb")).reduce((s,g)=>s+g.tot,0),tI=v.ingresos.reduce((s,i)=>s+i.base,0),tIB=v.ingresos.reduce((s,i)=>s+i.tot,0),rt=gR(v.ruta),m=tI-tG,p=tI>0?(m/tI*100):0;return{tG,tGI,tI,tIB,cP,m,p,ck:rt?.km>0?tG/rt.km:0,ct:v.peso>0?tG/v.peso:0,pF:v.ingresos.filter(i=>i.estado==="PEND_FACTURAR"),pC:v.ingresos.filter(i=>i.estado==="PENDIENTE"),km:rt?.km||0}}
 export default function App(){
   const [view,setView]=useState("dashboard");
@@ -43,6 +43,8 @@ export default function App(){
   const [sel,setSel]=useState(null);
   const [tab,setTab]=useState("resumen");
   const [cfm,setCfm]=useState(null);
+  const [vjModal,setVjModal]=useState(null); // null=closed, {mode:"new"} or {mode:"edit",vj:obj}
+  const [vjTab,setVjTab]=useState("general");
   const liq=useMemo(()=>{const m={};viajes.forEach(v=>{m[v.id]=calcL(v)});return m},[viajes]);
   const regC=useMemo(()=>{const r=[];viajes.forEach(v=>v.gastos.forEach(g=>{r.push({f:v.fS||v.fP||"",vj:v.cod,tdoc:g.tdoc,ndoc:g.ndoc,prov:g.prov,base:g.base,igv:g.igv,tot:g.tot,cat:g.cat})}));return r.sort((a,b)=>a.f.localeCompare(b.f))},[viajes]);
   const regV=useMemo(()=>{const r=[];viajes.forEach(v=>v.ingresos.forEach(i=>{const c=gCl(i.cli);r.push({f:i.fecha||"",vj:v.cod,tdoc:i.tdoc,sn:`${i.serie}-${i.nro}`,cli:c?.rs,ruc:c?.ruc,base:i.base,igv:i.igv,tot:i.tot,est:i.estado})}));return r.sort((a,b)=>(a.f||"z").localeCompare(b.f||"z"))},[viajes]);
@@ -52,6 +54,13 @@ export default function App(){
   const delCo=useCallback(id=>{setCompras(p=>p.filter(c=>c.id!==id));setCfm(null)},[]);
   const delDo=useCallback(id=>{setDocs(p=>p.filter(d=>d.id!==id));setCfm(null)},[]);
   const mvV=useCallback((id,ns)=>setViajes(p=>p.map(v=>v.id===id?{...v,est:ns,fS:ns==="EN_RUTA"&&!v.fS?TODAY:v.fS,fL:ns==="FINALIZADO"?TODAY:v.fL}:v)),[]);
+  const openNewVj=()=>{setVjModal({mode:"new"});setVjTab("general")};
+  const openEditVj=(v)=>{setVjModal({mode:"edit",vj:v});setVjTab("general")};
+  const saveVj=useCallback((data)=>{
+    if(vjModal?.mode==="edit"){setViajes(p=>p.map(v=>v.id===data.id?data:v))}
+    else{setViajes(p=>[...p,data])}
+    setVjModal(null);
+  },[vjModal]);
   const B=({t,bg,c:cl})=><span style={{display:"inline-flex",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:600,background:bg,color:cl,whiteSpace:"nowrap"}}>{t}</span>;
   const dC=t=>t==="FACTURA"?["#064E3B","#6EE7B7"]:t==="FACT_EXT"?["#1E3A5F","#93C5FD"]:t==="DOC_INT"||t==="DOC_INTERNO"?["#3B0764","#C4B5FD"]:t==="BOLETA"?["#78350F","#FDE68A"]:["#1F2937","#9CA3AF"];
   const IB=({i,onClick,c,t})=><button title={t} onClick={onClick} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"1px 3px",opacity:.5,color:c||"inherit"}} onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=.5}>{i}</button>;
@@ -110,16 +119,16 @@ export default function App(){
           </div>
         </div>}
         {view==="viajes"&&<div style={{animation:"su .2s"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>🚛 Viajes</h2></div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8,alignItems:"start"}}>
-            {KCOLS.map(col=>{const cv=viajes.filter(v=>v.est===col.k);return(<div key={col.k}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>🚛 Viajes</h2><button className="bt ba" onClick={openNewVj}>+ Nuevo Viaje</button></div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:8,alignItems:"start"}}>
+            {KCOLS.filter(col=>viajes.some(v=>v.est===col.k)).map(col=>{const cv=viajes.filter(v=>v.est===col.k);return(<div key={col.k}>
               <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:6}}><span>{col.i}</span><span style={{fontSize:10,fontWeight:700,color:col.c}}>{col.l}</span><span style={{fontSize:9,color:"#2A3344"}}>({cv.length})</span></div>
               {cv.map(v=>{const tr=gU(v.tr),rt=gR(v.ruta),l=liq[v.id];return(
                 <div key={v.id} className="kc" style={{borderLeft:`3px solid ${col.c}`,marginBottom:6}} onClick={()=>{setSel(v);setTab("resumen")}}>
                   <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
                     <span className="mn" style={{fontSize:9,fontWeight:600,color:col.c}}>{v.cod}</span>
                     <div style={{display:"flex",gap:0}} onClick={e=>e.stopPropagation()}>
-                      <IB i="✏️" t="Editar" onClick={()=>{setSel(v);setTab("resumen")}}/>
+                      <IB i="✏️" t="Editar" onClick={()=>openEditVj(v)}/>
                       <IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>setCfm({t:"viaje",id:v.id,l:v.cod})}/>
                     </div>
                   </div>
@@ -131,11 +140,13 @@ export default function App(){
                     <span>Mg: <span className="mn" style={{color:l.p>=20?"#34D399":"#F87171"}}>{n2(l.p)}%</span></span>
                   </div>}
                   {v.bolsa.totalPen>0&&<div style={{fontSize:8,color:"#F59E0B",marginTop:2}}>💰 Bolsa: {fS(v.bolsa.totalPen)}</div>}
+                  {v.estDetalle&&v.estDetalle.motivo&&<div style={{marginTop:3,padding:"3px 5px",background:`${col.c}11`,border:`1px solid ${col.c}22`,borderRadius:3,fontSize:8}}><div style={{color:col.c,fontWeight:600}}>{col.i} {v.estDetalle.motivo}</div>{v.estDetalle.ubicacion&&<div style={{color:"#3E4A5A"}}>📍 {v.estDetalle.ubicacion}</div>}</div>}
                   <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
                     <span className="mn" style={{fontSize:8,color:"#2A3344"}}>{fD(v.fP)}</span>
                     <div style={{display:"flex",gap:2}} onClick={e=>e.stopPropagation()}>
                       {col.k==="PROGRAMADO"&&<button className="bt" style={{fontSize:8,padding:"2px 6px"}} onClick={()=>mvV(v.id,"EN_RUTA")}>▶ Iniciar</button>}
-                      {col.k==="EN_RUTA"&&<button className="bt" style={{fontSize:8,padding:"2px 6px"}} onClick={()=>mvV(v.id,"FINALIZADO")}>✓ Fin</button>}
+                      {col.k==="EN_RUTA"&&<><button className="bt" style={{fontSize:8,padding:"2px 6px"}} onClick={()=>mvV(v.id,"FINALIZADO")}>✓ Fin</button><button className="bt" style={{fontSize:8,padding:"2px 6px"}} onClick={()=>mvV(v.id,"ESPERA_CARGA")}>⏳</button></>}
+                      {(col.k==="ESPERA_CARGA"||col.k==="MANTENIMIENTO"||col.k==="SIN_MOVIMIENTO")&&<button className="bt" style={{fontSize:8,padding:"2px 6px"}} onClick={()=>mvV(v.id,"EN_RUTA")}>▶ Reanudar</button>}
                     </div>
                   </div>
                 </div>
@@ -266,6 +277,114 @@ export default function App(){
         </div>
       </>)})()}
     </div></div>}
+    {vjModal&&(()=>{
+      const isEdit=vjModal.mode==="edit";
+      const ev=isEdit?vjModal.vj:null;
+      const nId=isEdit?ev.id:Math.max(0,...viajes.map(v=>v.id))+1;
+      const nCod=isEdit?ev.cod:`VJ-2026-${String(nId).padStart(4,"0")}`;
+      const [fm,setFm]=[vjModal._fm||{
+        tr:ev?.tr||"",con:ev?.con||"",ruta:ev?.ruta||"",cli:ev?.cli||"",serv:ev?.serv||"INTL",
+        peso:ev?.peso||0,carga:ev?.carga||"",est:ev?.est||"PROGRAMADO",
+        fP:ev?.fP||TODAY,fS:ev?.fS||null,fL:ev?.fL||null,
+        bolsaPen:ev?.bolsa?.pen||0,bolsaUsd:ev?.bolsa?.usd||0,bolsaTc:ev?.bolsa?.tcUsd||3.798,
+        estMotivo:ev?.estDetalle?.motivo||"",estUbicacion:ev?.estDetalle?.ubicacion||"",estDesde:ev?.estDetalle?.desde||"",estHasta:ev?.estDetalle?.hasta||""
+      },(v)=>setVjModal(p=>({...p,_fm:typeof v==="function"?v(p._fm||fm):v}))];
+      const updF=(k,val)=>setFm(p=>({...p,[k]:val}));
+      const selRuta=gR(parseInt(fm.ruta));
+      const needsDet=["ESPERA_CARGA","MANTENIMIENTO","SIN_MOVIMIENTO"].includes(fm.est);
+      const bTot=fm.bolsaPen+(fm.bolsaUsd*fm.bolsaTc);
+      const doSave=()=>{
+        if(!fm.tr||!fm.con||!fm.ruta){alert("Complete tractor, conductor y ruta");return}
+        const d={id:nId,cod:nCod,fP:fm.fP,fS:fm.fS,fL:fm.fL,tr:parseInt(fm.tr),con:parseInt(fm.con),ruta:parseInt(fm.ruta),cli:parseInt(fm.cli)||null,serv:fm.serv,peso:parseFloat(fm.peso)||0,carga:fm.carga,est:fm.est,
+          bolsa:{pen:parseFloat(fm.bolsaPen)||0,usd:parseFloat(fm.bolsaUsd)||0,tcUsd:parseFloat(fm.bolsaTc)||3.798,totalPen:bTot},
+          gastos:ev?.gastos||[],ingresos:ev?.ingresos||[],
+          estDetalle:needsDet?{motivo:fm.estMotivo,ubicacion:fm.estUbicacion,desde:fm.estDesde,hasta:fm.estHasta}:null};
+        saveVj(d)};
+      const IS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      const SS={...IS,appearance:"none"};
+      const LB={fontSize:8,color:"#3E4A5A",fontWeight:600,textTransform:"uppercase",marginBottom:2,display:"block"};
+      return(<div className="ov" onClick={()=>setVjModal(null)}><div className="mo" style={{maxWidth:640}} onClick={e=>e.stopPropagation()}>
+        <div style={{padding:"10px 16px",borderBottom:"1px solid #181E2A",display:"flex",justifyContent:"space-between",alignItems:"center",background:"#0A0C12"}}>
+          <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{fontSize:14}}>🚛</span><span className="mn" style={{fontSize:14,fontWeight:700,color:"#F59E0B"}}>{nCod}</span><span style={{fontSize:11,color:"#6B7A8D"}}>{isEdit?"Editar Viaje":"Nuevo Viaje"}</span></div>
+          <button className="bt" onClick={()=>setVjModal(null)}>✕</button>
+        </div>
+        <div style={{display:"flex",gap:0,borderBottom:"1px solid #181E2A",padding:"0 16px",background:"#0A0C12"}}>
+          {[["general","🚛 General"],["ruta","🗺️ Ruta"],["bolsa","💰 Bolsa"],["estado","📊 Estado"]].map(([k,la])=><div key={k} className={`tb ${vjTab===k?"ac":""}`} onClick={()=>setVjTab(k)} style={{cursor:"pointer"}}>{la}</div>)}
+        </div>
+        <div style={{padding:"12px 16px",maxHeight:"55vh",overflowY:"auto"}}>
+          {vjTab==="general"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div><label style={LB}>Ruta *</label><select value={fm.ruta} onChange={e=>{updF("ruta",e.target.value);const r=gR(parseInt(e.target.value));if(r)updF("serv",r.tp)}} style={SS}><option value="">Seleccionar...</option>{RUTAS.map(r=><option key={r.id} value={r.id}>{r.o} → {r.d} ({r.tp}) {r.km}km</option>)}</select></div>
+              <div><label style={LB}>Tipo</label><div style={{display:"flex",gap:4,marginTop:2}}><B t={fm.serv} bg={fm.serv==="INTL"?"#312E81":"#181E2A"} c={fm.serv==="INTL"?"#A5B4FC":"#6B7A8D"}/><span style={{fontSize:9,color:"#3E4A5A"}}>{fm.serv==="INTL"?"Internacional":"Local"}</span></div></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div><label style={LB}>Tractor *</label><select value={fm.tr} onChange={e=>updF("tr",e.target.value)} style={SS}><option value="">Seleccionar...</option>{UNI.map(u=><option key={u.id} value={u.id}>🚛 {u.pl} ({u.mk})</option>)}</select></div>
+              <div><label style={LB}>Conductor *</label><select value={fm.con} onChange={e=>updF("con",e.target.value)} style={SS}><option value="">Seleccionar...</option>{COND.map(c=><option key={c.id} value={c.id}>👤 {c.nm}</option>)}</select></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div><label style={LB}>Cliente</label><select value={fm.cli} onChange={e=>updF("cli",e.target.value)} style={SS}><option value="">Seleccionar...</option>{CLI.map(c=><option key={c.id} value={c.id}>{c.rs} ({c.pa})</option>)}</select></div>
+              <div><label style={LB}>Fecha Programada</label><input type="date" value={fm.fP} onChange={e=>updF("fP",e.target.value)} style={IS}/></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+              <div><label style={LB}>Carga</label><input value={fm.carga} onChange={e=>updF("carga",e.target.value)} style={IS} placeholder="Ej: Frutas, Cemento..."/></div>
+              <div><label style={LB}>Peso (toneladas)</label><input type="number" value={fm.peso} onChange={e=>updF("peso",e.target.value)} style={IS} step="0.5" min="0"/></div>
+            </div>
+          </div>}
+          {vjTab==="ruta"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+            {selRuta?<div className="bx" style={{display:"flex",alignItems:"center",gap:8}}>
+              <span style={{fontSize:16}}>🗺️</span>
+              <div><div style={{fontSize:12,fontWeight:700,color:"#E0E7F0"}}>{selRuta.o} → {selRuta.d}</div><div style={{display:"flex",gap:10,fontSize:9,color:"#3E4A5A",marginTop:2}}><span>📍 {selRuta.km} km</span><span>Código: {selRuta.c}</span><B t={selRuta.tp} bg={selRuta.tp==="INTL"?"#312E81":"#181E2A"} c={selRuta.tp==="INTL"?"#A5B4FC":"#6B7A8D"}/></div></div>
+            </div>:<div className="bx" style={{textAlign:"center",color:"#3E4A5A",fontSize:10}}>Seleccione una ruta en la pestaña General</div>}
+            {selRuta&&<div className="bx">
+              <div style={{fontSize:8,color:"#3E4A5A",fontWeight:600,textTransform:"uppercase",marginBottom:6}}>Recorrido</div>
+              <div style={{display:"flex",alignItems:"center",flexWrap:"wrap",gap:4}}>
+                <span style={{background:"#34D399",color:"#fff",padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:600}}>📍 {selRuta.o}</span>
+                <span style={{color:"#3E4A5A"}}>→</span>
+                <span style={{background:"#F59E0B",color:"#fff",padding:"2px 8px",borderRadius:4,fontSize:9,fontWeight:600}}>🏁 {selRuta.d}</span>
+              </div>
+              <div style={{marginTop:8,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+                <div style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>DISTANCIA</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#F59E0B"}}>{selRuta.km} km</div></div>
+                <div style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>TIPO</div><div style={{fontSize:11,fontWeight:600,color:selRuta.tp==="INTL"?"#A5B4FC":"#6B7A8D"}}>{selRuta.tp}</div></div>
+                <div style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>COSTO/KM EST.</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#818CF8"}}>{selRuta.tp==="INTL"?"~S/7-9":"~S/1-2"}</div></div>
+              </div>
+            </div>}
+          </div>}
+          {vjTab==="bolsa"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+              <div><label style={LB}>Soles (PEN)</label><input type="number" value={fm.bolsaPen} onChange={e=>updF("bolsaPen",e.target.value)} style={IS} step="0.01" min="0"/></div>
+              <div><label style={LB}>Dólares (USD)</label><input type="number" value={fm.bolsaUsd} onChange={e=>updF("bolsaUsd",e.target.value)} style={IS} step="0.01" min="0"/></div>
+              <div><label style={LB}>TC USD</label><input type="number" value={fm.bolsaTc} onChange={e=>updF("bolsaTc",e.target.value)} style={IS} step="0.001" min="0"/></div>
+            </div>
+            <div className="bx" style={{textAlign:"center",marginTop:4}}>
+              <div style={{fontSize:8,color:"#3E4A5A",textTransform:"uppercase"}}>Total Bolsa PEN</div>
+              <div className="mn" style={{fontSize:22,fontWeight:700,color:"#F59E0B"}}>{fS(bTot)}</div>
+              <div style={{fontSize:8,color:"#3E4A5A",marginTop:2}}>S/ {fN(parseFloat(fm.bolsaPen)||0)} + ${fN(parseFloat(fm.bolsaUsd)||0)} × {fm.bolsaTc}</div>
+            </div>
+          </div>}
+          {vjTab==="estado"&&<div style={{display:"flex",flexDirection:"column",gap:10}}>
+            <div><label style={LB}>Estado del Viaje</label>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:4,marginTop:4}}>
+                {KCOLS.map(e=><button key={e.k} onClick={()=>updF("est",e.k)} style={{padding:"6px 8px",borderRadius:5,border:fm.est===e.k?`2px solid ${e.c}`:"1px solid #181E2A",background:fm.est===e.k?`${e.c}15`:"#0E1219",color:fm.est===e.k?e.c:"#3E4A5A",cursor:"pointer",fontSize:9,fontWeight:fm.est===e.k?600:400,display:"flex",alignItems:"center",gap:4,fontFamily:"inherit",transition:"all .1s"}}><span>{e.i}</span>{e.l}</button>)}
+              </div>
+            </div>
+            {needsDet&&<div style={{background:`${KCOLS.find(e=>e.k===fm.est)?.c}08`,border:`1px solid ${KCOLS.find(e=>e.k===fm.est)?.c}22`,borderRadius:6,padding:10}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}><span style={{fontSize:14}}>{KCOLS.find(e=>e.k===fm.est)?.i}</span><span style={{fontSize:11,fontWeight:600,color:KCOLS.find(e=>e.k===fm.est)?.c}}>Detalle: {KCOLS.find(e=>e.k===fm.est)?.l}</span></div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <div><label style={LB}>Motivo *</label><input value={fm.estMotivo} onChange={e=>updF("estMotivo",e.target.value)} style={IS} placeholder={fm.est==="ESPERA_CARGA"?"Ej: Esperando confirmación del cliente":fm.est==="MANTENIMIENTO"?"Ej: Cambio de llantas":"Ej: Sin carga asignada"}/></div>
+                <div><label style={LB}>Ubicación Actual *</label><input value={fm.estUbicacion} onChange={e=>updF("estUbicacion",e.target.value)} style={IS} placeholder="Ej: Terminal Chiclayo, Taller Piura"/></div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div><label style={LB}>Desde</label><input type="date" value={fm.estDesde} onChange={e=>updF("estDesde",e.target.value)} style={IS}/></div>
+                  <div><label style={LB}>Hasta (estimado)</label><input type="date" value={fm.estHasta} onChange={e=>updF("estHasta",e.target.value)} style={IS}/></div>
+                </div>
+              </div>
+            </div>}
+          </div>}
+        </div>
+        <div style={{padding:"10px 16px",borderTop:"1px solid #181E2A",display:"flex",justifyContent:"space-between"}}>
+          <button className="bt" onClick={()=>setVjModal(null)}>Cancelar</button>
+          <button className="bt ba" style={{fontWeight:600}} onClick={doSave}>{isEdit?"💾 Guardar Cambios":"➕ Crear Viaje"}</button>
+        </div>
+      </div></div>)})()}
     {cfm&&<div className="ov" onClick={()=>setCfm(null)}><div className="mo" style={{maxWidth:400,padding:20}} onClick={e=>e.stopPropagation()}>
       <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:8}}>⚠️ Confirmar eliminación</div>
       <div style={{fontSize:11,color:"#B8C4D4",marginBottom:16}}>¿Eliminar <strong style={{color:"#F59E0B"}}>{cfm.l}</strong>? Esta acción no se puede deshacer.</div>

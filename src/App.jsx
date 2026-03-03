@@ -10,28 +10,33 @@ const SEMI_I=[{id:1,pl:"T3S-001",tipo:"PLATAFORMA"},{id:2,pl:"T3S-002",tipo:"FUR
 const COND_I=[{id:1,nm:"HIDALGO V."},{id:2,nm:"FLORES V."},{id:3,nm:"GAMBOA B."},{id:4,nm:"MACHA E."},{id:5,nm:"ZAPATA G."},{id:6,nm:"VALDIVIEZO Y."},{id:7,nm:"VILLANUEVA T."},{id:8,nm:"SANCHEZ C."}];
 const RUTAS_I=[{id:1,c:"CHI-GYQ",o:"Chiclayo",d:"Guayaquil",tp:"INTL",km:980},{id:2,c:"CHI-BOG",o:"Chiclayo",d:"Bogotá",tp:"INTL",km:2850},{id:3,c:"LIM-CHI",o:"Lima",d:"Chiclayo",tp:"LOCAL",km:770},{id:5,c:"LIM-TRU",o:"Lima",d:"Trujillo",tp:"LOCAL",km:560},{id:8,c:"CHI-LIM",o:"Chiclayo",d:"Lima",tp:"LOCAL",km:770}];
 const CLI_I=[{id:1,rs:"Agroindustrias AIB",ruc:"20100055237",pa:"PE"},{id:2,rs:"Cementos Pacasmayo",ruc:"20419387658",pa:"PE"},{id:4,rs:"TransAndina Ecuador",ruc:"0992847561001",pa:"EC"},{id:5,rs:"Distrib. Nal. Colombia",ruc:"900456789-1",pa:"CO"},{id:6,rs:"Minera Yanacocha",ruc:"20137291313",pa:"PE"}];
+const CATS_G=["Comb.Local","Comb.Ecuador","Peaje","Alimentación","Hospedaje","Aduana","Mantenimiento","Repuestos","Estiba","Comisiones","Lavado","Guardianía","Otros"];
+const TDOCS=["FACTURA","FACT_EXT","BOLETA","RECIBO","TICKET","VALE","SIN_DOC"];
+const CAJAS_I=[{id:1,nm:"Caja Chica",tipo:"CAJA",saldo:15000,saldoUsd:500},{id:2,nm:"Caja Principal",tipo:"CAJA",saldo:85000,saldoUsd:2000},{id:3,nm:"BCP Cta.Cte.",tipo:"BANCO",saldo:120000,saldoUsd:8000},{id:4,nm:"BBVA Cta.Cte.",tipo:"BANCO",saldo:45000,saldoUsd:3000},{id:5,nm:"Banco Nación",tipo:"BANCO",saldo:30000,saldoUsd:0}];
 const gU=(id,a)=>a.find(u=>u.id===id),gC=(id,a)=>a.find(c=>c.id===id),gR=(id,a)=>a.find(r=>r.id===id),gCl=(id,a)=>a.find(c=>c.id===id),gSm=(id,a)=>a.find(s=>s.id===id);
+const bTP=b=>b.pen+(b.usd*(b.tcUsd||0));
+const TDOC_ID=["RUC","DNI","CE","PASAPORTE","RUC_EXT","SIN_DOC"];
 const COMPRAS_I=[
   {id:1,fecha:"2026-02-10",prov:"PetroEcuador S.A.",tdoc:"FACT_EXT",ndoc:"001-0045892",gal:800,puUsd:2.35,totUsd:1880,tc:3.785,base:7115.80,igv:0,tot:7115.80,cu:8.89,lote:"LOT-001",vjId:1},
   {id:2,fecha:"2026-02-14",prov:"PetroEcuador S.A.",tdoc:"FACT_EXT",ndoc:"001-0045978",gal:900,puUsd:2.38,totUsd:2142,tc:3.792,base:8122.46,igv:0,tot:8122.46,cu:9.03,lote:"LOT-002",vjId:2},
   {id:3,fecha:"2026-02-20",prov:"GasolinExpress GYQ",tdoc:"FACT_EXT",ndoc:"002-0012456",gal:750,puUsd:2.32,totUsd:1740,tc:3.798,base:6608.52,igv:0,tot:6608.52,cu:8.81,lote:"LOT-003",vjId:4},
 ];
 const VJS_I=[
-  {id:1,cod:"VJ-2026-0001",fP:"2026-02-10",fS:"2026-02-10",fL:"2026-02-12",tr:4,con:1,ruta:1,cli:4,serv:"INTL",peso:28.5,carga:"Frutas",est:"FINALIZADO",bolsa:{pen:1500,usd:500,tcUsd:3.785,totalPen:3392.50},
+  {id:1,cod:"VJ-2026-0001",fP:"2026-02-10",fS:"2026-02-10",fL:"2026-02-12",tr:4,con:1,ruta:1,cli:4,serv:"INTL",peso:28.5,carga:"Frutas",est:"FINALIZADO",bolsa:{pen:1500,orPen:1,usd:500,orUsd:1,tcUsd:3.785,estLiq:"LIQUIDADO",saldoAccion:"DEVUELTO",saldoDestPen:1,saldoDestUsd:1},
     gastos:[{cat:"Comb.Ecuador",tdoc:"FACT_EXT",ndoc:"001-0045892",prov:"PetroEcuador",mon:"USD",monto:1880,tc:3.785,base:7115.80,igv:0,tot:7115.80},{cat:"Peaje",tdoc:"RECIBO",ndoc:"VAR-001",prov:"Rutas Lima",mon:"PEN",monto:280,tc:1,base:237.29,igv:42.71,tot:280},{cat:"Alimentación",tdoc:"BOLETA",ndoc:"B001-456",prov:"Varios",mon:"PEN",monto:180,tc:1,base:152.54,igv:27.46,tot:180},{cat:"Aduana",tdoc:"RECIBO",ndoc:"ADU-018",prov:"SUNAT",mon:"PEN",monto:350,tc:1,base:350,igv:0,tot:350},{cat:"Hospedaje",tdoc:"FACT_EXT",ndoc:"HGQ-892",prov:"Hotel GYQ",mon:"USD",monto:45,tc:3.785,base:170.33,igv:0,tot:170.33}],
     ingresos:[{tdoc:"FACTURA",serie:"F001",nro:"00234",fecha:"2026-02-13",cli:4,mon:"USD",monto:2500,tc:3.792,base:8033.90,igv:1446.10,tot:9480,estado:"COBRADO",fCobro:"2026-02-20"}]},
-  {id:2,cod:"VJ-2026-0002",fP:"2026-02-14",fS:"2026-02-14",fL:"2026-02-17",tr:9,con:3,ruta:1,cli:4,serv:"INTL",peso:24,carga:"Insumos",est:"FINALIZADO",bolsa:{pen:1200,usd:600,tcUsd:3.792,totalPen:3475.20},
+  {id:2,cod:"VJ-2026-0002",fP:"2026-02-14",fS:"2026-02-14",fL:"2026-02-17",tr:9,con:3,ruta:1,cli:4,serv:"INTL",peso:24,carga:"Insumos",est:"FINALIZADO",bolsa:{pen:1200,orPen:1,usd:600,orUsd:3,tcUsd:3.792,estLiq:"LIQUIDADO",saldoAccion:"DEVUELTO",saldoDestPen:2,saldoDestUsd:3},
     gastos:[{cat:"Comb.Ecuador",tdoc:"FACT_EXT",ndoc:"001-0045978",prov:"PetroEcuador",mon:"USD",monto:2142,tc:3.792,base:8122.46,igv:0,tot:8122.46},{cat:"Peaje",tdoc:"RECIBO",ndoc:"VAR-002",prov:"Rutas Lima",mon:"PEN",monto:320,tc:1,base:271.19,igv:48.81,tot:320},{cat:"Alimentación",tdoc:"BOLETA",ndoc:"B001-489",prov:"Varios",mon:"PEN",monto:240,tc:1,base:203.39,igv:36.61,tot:240},{cat:"Hospedaje",tdoc:"FACT_EXT",ndoc:"HGQ-910",prov:"Hotel GYQ",mon:"USD",monto:90,tc:3.792,base:341.28,igv:0,tot:341.28}],
     ingresos:[{tdoc:"FACTURA",serie:"F001",nro:"00235",fecha:"2026-02-18",cli:4,mon:"USD",monto:2200,tc:3.798,base:7081.36,igv:1274.64,tot:8355.60,estado:"PENDIENTE",fCobro:null}]},
-  {id:3,cod:"VJ-2026-0003",fP:"2026-02-18",fS:"2026-02-18",fL:"2026-02-20",tr:6,con:5,ruta:3,cli:2,serv:"LOCAL",peso:30,carga:"Cemento",est:"FINALIZADO",bolsa:{pen:800,usd:0,tcUsd:0,totalPen:800},
+  {id:3,cod:"VJ-2026-0003",fP:"2026-02-18",fS:"2026-02-18",fL:"2026-02-20",tr:6,con:5,ruta:3,cli:2,serv:"LOCAL",peso:30,carga:"Cemento",est:"FINALIZADO",bolsa:{pen:800,orPen:2,usd:0,orUsd:null,tcUsd:0,estLiq:"LIQUIDADO",saldoAccion:"DEVUELTO",saldoDestPen:2,saldoDestUsd:null},
     gastos:[{cat:"Comb.Local",tdoc:"FACTURA",ndoc:"F040-5672",prov:"Grifo Repsol",mon:"PEN",monto:720,tc:1,base:610.17,igv:109.83,tot:720},{cat:"Peaje",tdoc:"RECIBO",ndoc:"VAR-003",prov:"IIRSA",mon:"PEN",monto:180,tc:1,base:152.54,igv:27.46,tot:180},{cat:"Alimentación",tdoc:"BOLETA",ndoc:"B002-1234",prov:"Varios",mon:"PEN",monto:150,tc:1,base:127.12,igv:22.88,tot:150}],
     ingresos:[{tdoc:"FACTURA",serie:"F001",nro:"00236",fecha:"2026-02-21",cli:2,mon:"PEN",monto:3800,tc:1,base:3220.34,igv:579.66,tot:3800,estado:"COBRADO",fCobro:"2026-02-24"}]},
-  {id:4,cod:"VJ-2026-0004",fP:"2026-02-20",fS:"2026-02-20",fL:null,tr:28,con:6,ruta:1,cli:4,serv:"INTL",peso:22,carga:"Mat.Constr.",est:"EN_RUTA",bolsa:{pen:1000,usd:450,tcUsd:3.798,totalPen:2709.10},
+  {id:4,cod:"VJ-2026-0004",fP:"2026-02-20",fS:"2026-02-20",fL:null,tr:28,con:6,ruta:1,cli:4,serv:"INTL",peso:22,carga:"Mat.Constr.",est:"EN_RUTA",bolsa:{pen:1000,orPen:1,usd:450,orUsd:3,tcUsd:3.798,estLiq:"EN_PROCESO"},
     gastos:[{cat:"Comb.Ecuador",tdoc:"FACT_EXT",ndoc:"002-0012456",prov:"GasolinExpress",mon:"USD",monto:1740,tc:3.798,base:6608.52,igv:0,tot:6608.52},{cat:"Peaje",tdoc:"RECIBO",ndoc:"VAR-004",prov:"IIRSA",mon:"PEN",monto:280,tc:1,base:237.29,igv:42.71,tot:280}],
     ingresos:[{tdoc:"DOC_INTERNO",serie:"DI",nro:"00015",fecha:"2026-02-20",cli:4,mon:"USD",monto:1800,tc:3.798,base:5793.56,igv:0,tot:6836.40,estado:"PEND_FACTURAR",fCobro:null}]},
-  {id:5,cod:"VJ-2026-0005",fP:"2026-02-26",fS:null,fL:null,tr:17,con:7,ruta:2,cli:5,serv:"INTL",peso:25,carga:"Equipos",est:"PROGRAMADO",bolsa:{pen:0,usd:0,tcUsd:0,totalPen:0},gastos:[],
+  {id:5,cod:"VJ-2026-0005",fP:"2026-02-26",fS:null,fL:null,tr:17,con:7,ruta:2,cli:5,serv:"INTL",peso:25,carga:"Equipos",est:"PROGRAMADO",bolsa:{pen:0,orPen:null,usd:0,orUsd:null,tcUsd:0,estLiq:"PENDIENTE"},gastos:[],
     ingresos:[{tdoc:"DOC_INTERNO",serie:"DI",nro:"00016",fecha:null,cli:5,mon:"USD",monto:3200,tc:3.798,base:10316.95,igv:0,tot:12153.60,estado:"PEND_FACTURAR",fCobro:null}]},
-  {id:6,cod:"VJ-2026-0006",fP:"2026-02-28",fS:null,fL:null,tr:8,con:4,ruta:8,cli:6,serv:"LOCAL",peso:32,carga:"Eq.Mineros",est:"PROGRAMADO",bolsa:{pen:0,usd:0,tcUsd:0,totalPen:0},gastos:[],ingresos:[]},
+  {id:6,cod:"VJ-2026-0006",fP:"2026-02-28",fS:null,fL:null,tr:8,con:4,ruta:8,cli:6,serv:"LOCAL",peso:32,carga:"Eq.Mineros",est:"PROGRAMADO",bolsa:{pen:0,orPen:null,usd:0,orUsd:null,tcUsd:0,estLiq:"PENDIENTE"},gastos:[],ingresos:[]},
 ];
 const DOCS_I=[{id:1,tipo:"GUIA_REM",nro:"T001-125",fecha:"2026-02-10",ent:"NTF",ref:"VJ-0001",desc:"Guía CHI-GYQ",arch:"GR_125.pdf"},{id:2,tipo:"FACT_EXT",nro:"001-045892",fecha:"2026-02-10",ent:"PetroEcuador",ref:"LOT-001",desc:"Fact.comb.Ecuador",arch:"FACT_892.pdf"},{id:3,tipo:"FACTURA",nro:"F001-00234",fecha:"2026-02-13",ent:"NTF→TransAndina",ref:"VJ-0001",desc:"Fact.transporte",arch:"F001-234.pdf"},{id:4,tipo:"FACTURA",nro:"F001-00235",fecha:"2026-02-18",ent:"NTF→TransAndina",ref:"VJ-0002",desc:"Fact.transporte",arch:"F001-235.pdf"},{id:5,tipo:"FACTURA",nro:"F001-00236",fecha:"2026-02-21",ent:"NTF→Cementos",ref:"VJ-0003",desc:"Fact.local",arch:"F001-236.pdf"},{id:6,tipo:"DOC_INT",nro:"DI-00015",fecha:"2026-02-20",ent:"NTF int.",ref:"VJ-0004",desc:"Pend.facturar",arch:null},{id:7,tipo:"BOLETA",nro:"B001-456",fecha:"2026-02-11",ent:"Varios",ref:"VJ-0001",desc:"Alimentación",arch:"BOL_456.jpg"}];
 const KCOLS=[{k:"PROGRAMADO",l:"Programado",i:"📋",c:"#818CF8"},{k:"ESPERA_CARGA",l:"Espera Carga",i:"⏳",c:"#A78BFA"},{k:"EN_RUTA",l:"En Ruta",i:"🚛",c:"#F59E0B"},{k:"MANTENIMIENTO",l:"Mantenimiento",i:"🔧",c:"#F87171"},{k:"SIN_MOVIMIENTO",l:"Sin Movimiento",i:"⛔",c:"#6B7280"},{k:"FINALIZADO",l:"Finalizado",i:"✅",c:"#34D399"},{k:"CANCELADO",l:"Cancelado",i:"❌",c:"#991B1B"}];
@@ -44,6 +49,7 @@ export default function App(){
   const [conds,setConds]=useState(COND_I);
   const [rutas,setRutas]=useState(RUTAS_I);
   const [clis,setClis]=useState(CLI_I);
+  const [cajas,setCajas]=useState(CAJAS_I);
   const [compras,setCompras]=useState(COMPRAS_I);
   const [docs,setDocs]=useState(DOCS_I);
   const [sel,setSel]=useState(null);
@@ -52,12 +58,29 @@ export default function App(){
   const [vjModal,setVjModal]=useState(null);
   const [vjTab,setVjTab]=useState("general");
   const [quickAdd,setQuickAdd]=useState(null);
+  const [cajaModal,setCajaModal]=useState(null);
+  const [gastoModal,setGastoModal]=useState(null); // {vjId, gasto?:existing, idx?}
+  const [liqSel,setLiqSel]=useState(null); // viaje id for liquidacion detail
+  const [bolsaModal,setBolsaModal]=useState(null); // {vjId} for assigning bolsa origin
+  const [saldoModal,setSaldoModal]=useState(null); // {vjId, saldo} for closing liquidacion
   const nxId=(arr)=>Math.max(0,...arr.map(x=>x.id))+1;
   const addUni=(u)=>{const id=nxId(unis);setUnis(p=>[...p,{...u,id}]);setQuickAdd(null);return id};
   const addSemi=(s)=>{const id=nxId(semis);setSemis(p=>[...p,{...s,id}]);setQuickAdd(null);return id};
   const addCond=(c)=>{const id=nxId(conds);setConds(p=>[...p,{...c,id}]);setQuickAdd(null);return id};
   const addRuta=(r)=>{const id=nxId(rutas);setRutas(p=>[...p,{...r,id}]);setQuickAdd(null);return id};
   const addCli=(c)=>{const id=nxId(clis);setClis(p=>[...p,{...c,id}]);setQuickAdd(null);return id};
+  const addGasto=(vjId,g)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,gastos:[...v.gastos,g],bolsa:{...v.bolsa,estLiq:v.bolsa.estLiq==="PENDIENTE"?"EN_PROCESO":v.bolsa.estLiq}}:v));
+  const updGasto=(vjId,idx,g)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,gastos:v.gastos.map((x,i)=>i===idx?g:x)}:v));
+  const delGasto=(vjId,idx)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,gastos:v.gastos.filter((_,i)=>i!==idx)}:v));
+  const setBolsaOrigen=(vjId,orPen,pen,orUsd,usd,tc)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,bolsa:{...v.bolsa,pen,orPen,usd,orUsd,tcUsd:tc,estLiq:v.bolsa.estLiq==="PENDIENTE"?"EN_PROCESO":v.bolsa.estLiq}}:v));
+  const cerrarLiq=(vjId,accionPen,destPenId,accionUsd,destUsdId)=>{setViajes(p=>p.map(v=>{if(v.id!==vjId)return v;
+    const gPen=v.gastos.filter(g=>g.mon==="PEN").reduce((s,g)=>s+g.tot,0),gUsd=v.gastos.filter(g=>g.mon!=="PEN").reduce((s,g)=>s+g.monto,0);
+    const saldoPen=v.bolsa.pen-gPen,saldoUsd=v.bolsa.usd-gUsd;
+    if(accionPen==="DEVUELTO"&&destPenId&&saldoPen>0){setCajas(c=>c.map(x=>x.id===destPenId?{...x,saldo:x.saldo+saldoPen}:x))}
+    if(accionUsd==="DEVUELTO"&&destUsdId&&saldoUsd>0){setCajas(c=>c.map(x=>x.id===destUsdId?{...x,saldoUsd:(x.saldoUsd||0)+saldoUsd}:x))}
+    return{...v,bolsa:{...v.bolsa,estLiq:"LIQUIDADO",saldoAccion:accionPen,saldoDestPen:destPenId,saldoAccionUsd:accionUsd,saldoDestUsd:destUsdId}}}));
+    setSaldoModal(null)};
+  const addCaja=(nm,tipo)=>{const id=nxId(cajas);setCajas(p=>[...p,{id,nm,tipo:tipo||"CAJA",saldo:0,saldoUsd:0}]);return id};
   const liq=useMemo(()=>{const m={};viajes.forEach(v=>{m[v.id]=calcL(v,rutas)});return m},[viajes,rutas]);
   const regC=useMemo(()=>{const r=[];viajes.forEach(v=>v.gastos.forEach(g=>{r.push({f:v.fS||v.fP||"",vj:v.cod,tdoc:g.tdoc,ndoc:g.ndoc,prov:g.prov,base:g.base,igv:g.igv,tot:g.tot,cat:g.cat})}));return r.sort((a,b)=>a.f.localeCompare(b.f))},[viajes]);
   const regV=useMemo(()=>{const r=[];viajes.forEach(v=>v.ingresos.forEach(i=>{const c=gCl(i.cli,clis);r.push({f:i.fecha||"",vj:v.cod,tdoc:i.tdoc,sn:`${i.serie}-${i.nro}`,cli:c?.rs,ruc:c?.ruc,base:i.base,igv:i.igv,tot:i.tot,est:i.estado})}));return r.sort((a,b)=>(a.f||"z").localeCompare(b.f||"z"))},[viajes,clis]);
@@ -153,7 +176,7 @@ export default function App(){
                     <span>Costo: <span className="mn" style={{color:"#F87171"}}>{fS(l.tG)}</span></span>
                     <span>Mg: <span className="mn" style={{color:l.p>=20?"#34D399":"#F87171"}}>{n2(l.p)}%</span></span>
                   </div>}
-                  {v.bolsa.totalPen>0&&<div style={{fontSize:8,color:"#F59E0B",marginTop:2}}>💰 Bolsa: {fS(v.bolsa.totalPen)}</div>}
+                  {(v.bolsa.pen>0||v.bolsa.usd>0)&&<div style={{fontSize:8,color:"#F59E0B",marginTop:2}}>💰 {v.bolsa.pen>0?fS(v.bolsa.pen):""}{v.bolsa.pen>0&&v.bolsa.usd>0?" + ":""}{v.bolsa.usd>0?"$"+fN(v.bolsa.usd):""}</div>}
                   {v.estDetalle&&v.estDetalle.motivo&&<div style={{marginTop:3,padding:"3px 5px",background:`${col.c}11`,border:`1px solid ${col.c}22`,borderRadius:3,fontSize:8}}><div style={{color:col.c,fontWeight:600}}>{v.estDetalle.motivo}</div>{v.estDetalle.ubicacion&&<div style={{color:"#3E4A5A"}}>📍 {v.estDetalle.ubicacion}</div>}</div>}
                   <div style={{display:"flex",justifyContent:"space-between",marginTop:3}}>
                     <span className="mn" style={{fontSize:8,color:"#2A3344"}}>{fD(v.fP)}</span>
@@ -183,22 +206,69 @@ export default function App(){
             </tbody></table></div>
         </div>}
         {view==="liquidacion"&&<div style={{animation:"su .2s"}}>
-          <h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9",marginBottom:4}}>💰 Liquidación por Viaje</h2>
-          <div style={{fontSize:9,color:"#6B7A8D",marginBottom:8}}>Costeo: Base Imponible sin IGV</div>
-          <div className="cd" style={{overflow:"auto"}}>
-            <table className="tbl"><thead><tr><th>Viaje</th><th>Ruta</th><th>Tipo</th><th>Comb</th><th>Costos</th><th>Ingresos</th><th>Margen</th><th>%</th><th>S//km</th><th>Factur.</th><th></th></tr></thead><tbody>
-              {viajes.filter(v=>v.gastos.length>0).sort((a,b)=>liq[b.id].p-liq[a.id].p).map(v=>{const l=liq[v.id],rt=gR(v.ruta,rutas);return(<tr key={v.id} style={{cursor:"pointer"}} onClick={()=>{setSel(v);setTab("resumen")}}>
-                <td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{v.cod}</td><td style={{fontSize:9}}>{rt?.o}→{rt?.d}</td>
-                <td><B t={v.serv} bg={v.serv==="INTL"?"#312E81":"#181E2A"} c={v.serv==="INTL"?"#A5B4FC":"#6B7A8D"}/></td>
-                <td className="mn" style={{color:"#F59E0B"}}>{fS(l.cP)}</td><td className="mn" style={{fontWeight:600,color:"#F87171"}}>{fS(l.tG)}</td>
-                <td className="mn" style={{fontWeight:600,color:"#34D399"}}>{fS(l.tI)}</td>
-                <td className="mn" style={{fontWeight:700,color:l.p>=20?"#34D399":"#F87171"}}>{fS(l.m)}</td>
-                <td className="mn" style={{fontWeight:700,fontSize:11,color:l.p>=20?"#34D399":"#F87171"}}>{n2(l.p)}%</td>
-                <td className="mn" style={{color:"#6B7A8D"}}>{fS(l.ck)}</td>
-                <td>{l.pF.length>0?<B t="PEND.FACT" bg="#3B076444" c="#C4B5FD"/>:l.pC.length>0?<B t="PEND.COBRO" bg="#7F1D1D44" c="#FCA5A5"/>:<B t="COBRADO" bg="#064E3B" c="#6EE7B7"/>}</td>
-                <td onClick={e=>e.stopPropagation()}><IB i="✏️" t="Ver detalle" onClick={()=>{setSel(v);setTab("resumen")}}/></td>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>💰 Liquidación por Viaje</h2>
+            <button className="bt ba" onClick={()=>setQuickAdd({type:"caja",fields:{nm:"",tipo:"CAJA"}})}>+ Caja/Banco</button></div>
+          <div style={{fontSize:9,color:"#6B7A8D",marginBottom:8}}>Bolsa dual PEN/USD · Gastos por moneda · Cierre con saldo</div>
+          <div className="cd" style={{overflow:"auto",marginBottom:8}}>
+            <table className="tbl"><thead><tr><th>Viaje</th><th>Ruta</th><th>Bolsa S/</th><th>Or.PEN</th><th>Bolsa $</th><th>Or.USD</th><th>Gast.S/</th><th>Gast.$</th><th>Saldo S/</th><th>Saldo $</th><th>Liq.</th><th></th></tr></thead><tbody>
+              {viajes.map(v=>{const l=liq[v.id],rt=gR(v.ruta,rutas),eLiq=v.bolsa.estLiq||"PENDIENTE",
+                gPen=v.gastos.filter(g=>g.mon==="PEN").reduce((s,g)=>s+g.tot,0),gUsd=v.gastos.filter(g=>g.mon!=="PEN").reduce((s,g)=>s+g.monto,0),
+                sPen=v.bolsa.pen-gPen,sUsd=v.bolsa.usd-gUsd,
+                orPenC=v.bolsa.orPen?cajas.find(c=>c.id===v.bolsa.orPen):null,orUsdC=v.bolsa.orUsd?cajas.find(c=>c.id===v.bolsa.orUsd):null;
+                return(<tr key={v.id} style={{cursor:"pointer",opacity:eLiq==="LIQUIDADO"?.65:1}} onClick={()=>setLiqSel(liqSel===v.id?null:v.id)}>
+                <td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{v.cod}</td>
+                <td style={{fontSize:9}}>{rt?.o}→{rt?.d}</td>
+                <td className="mn" style={{fontWeight:600,color:"#34D399"}}>{fS(v.bolsa.pen)}</td>
+                <td style={{fontSize:8}}>{orPenC?<B t={orPenC.nm} bg="#064E3B" c="#6EE7B7"/>:<span style={{color:"#3E4A5A"}}>—</span>}</td>
+                <td className="mn" style={{fontWeight:600,color:"#93C5FD"}}>${fN(v.bolsa.usd)}</td>
+                <td style={{fontSize:8}}>{orUsdC?<B t={orUsdC.nm} bg="#1E3A5F" c="#93C5FD"/>:<span style={{color:"#3E4A5A"}}>—</span>}</td>
+                <td className="mn" style={{color:"#F87171"}}>{fS(gPen)}</td>
+                <td className="mn" style={{color:"#F87171"}}>${fN(gUsd)}</td>
+                <td className="mn" style={{fontWeight:600,color:sPen>=0?"#34D399":"#F87171"}}>{fS(sPen)}</td>
+                <td className="mn" style={{fontWeight:600,color:sUsd>=0?"#93C5FD":"#F87171"}}>${fN(sUsd)}</td>
+                <td><B t={eLiq==="LIQUIDADO"?"LIQUIDADO":eLiq==="EN_PROCESO"?"EN PROCESO":"PENDIENTE"} bg={eLiq==="LIQUIDADO"?"#064E3B":eLiq==="EN_PROCESO"?"#78350F":"#7F1D1D44"} c={eLiq==="LIQUIDADO"?"#6EE7B7":eLiq==="EN_PROCESO"?"#FDE68A":"#FCA5A5"}/></td>
+                <td onClick={e=>e.stopPropagation()} style={{whiteSpace:"nowrap"}}>
+                  {eLiq!=="LIQUIDADO"&&<><button className="bt" style={{fontSize:8,padding:"2px 5px"}} onClick={()=>setBolsaModal({vjId:v.id})}>💰 Bolsa</button>
+                  <button className="bt" style={{fontSize:8,padding:"2px 5px",marginLeft:2}} onClick={()=>setGastoModal({vjId:v.id})}>+ Gasto</button>
+                  {v.gastos.length>0&&<button className="bt ba" style={{fontSize:8,padding:"2px 5px",marginLeft:2}} onClick={()=>setSaldoModal({vjId:v.id,sPen,sUsd})}>🔒</button>}</>}
+                </td>
               </tr>)})}
             </tbody></table></div>
+          {liqSel&&(()=>{const v=viajes.find(x=>x.id===liqSel);if(!v)return null;const l=liq[v.id],
+            gPen=v.gastos.filter(g=>g.mon==="PEN").reduce((s,g)=>s+g.tot,0),gUsd=v.gastos.filter(g=>g.mon!=="PEN").reduce((s,g)=>s+g.monto,0),
+            sPen=v.bolsa.pen-gPen,sUsd=v.bolsa.usd-gUsd,
+            orPenC=v.bolsa.orPen?cajas.find(c=>c.id===v.bolsa.orPen):null,orUsdC=v.bolsa.orUsd?cajas.find(c=>c.id===v.bolsa.orUsd):null;return(
+            <div className="cd" style={{padding:12,marginBottom:8,animation:"su .15s"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:8}}><span className="mn" style={{fontSize:13,fontWeight:700,color:"#F59E0B"}}>{v.cod}</span><span style={{fontSize:10,color:"#6B7A8D"}}>{gR(v.ruta,rutas)?.o} → {gR(v.ruta,rutas)?.d}</span>
+                <B t={v.bolsa.estLiq||"PENDIENTE"} bg={v.bolsa.estLiq==="LIQUIDADO"?"#064E3B":"#78350F"} c={v.bolsa.estLiq==="LIQUIDADO"?"#6EE7B7":"#FDE68A"}/></div>
+                <button className="bt" onClick={()=>setLiqSel(null)}>✕</button>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:6,marginBottom:6}}>
+                <div className="bx" style={{textAlign:"center",borderTop:"2px solid #34D399"}}><div style={{fontSize:7,color:"#3E4A5A"}}>BOLSA S/</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#34D399"}}>{fS(v.bolsa.pen)}</div><div style={{fontSize:7,color:"#3E4A5A"}}>{orPenC?.nm||"—"}</div></div>
+                <div className="bx" style={{textAlign:"center",borderTop:"2px solid #93C5FD"}}><div style={{fontSize:7,color:"#3E4A5A"}}>BOLSA $</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#93C5FD"}}>${fN(v.bolsa.usd)}</div><div style={{fontSize:7,color:"#3E4A5A"}}>{orUsdC?.nm||"—"}</div></div>
+                <div className="bx" style={{textAlign:"center",borderTop:`2px solid ${sPen>=0?"#34D399":"#F87171"}`}}><div style={{fontSize:7,color:"#3E4A5A"}}>SALDO S/</div><div className="mn" style={{fontSize:13,fontWeight:700,color:sPen>=0?"#34D399":"#F87171"}}>{fS(sPen)}</div></div>
+                <div className="bx" style={{textAlign:"center",borderTop:`2px solid ${sUsd>=0?"#93C5FD":"#F87171"}`}}><div style={{fontSize:7,color:"#3E4A5A"}}>SALDO $</div><div className="mn" style={{fontSize:13,fontWeight:700,color:sUsd>=0?"#93C5FD":"#F87171"}}>${fN(sUsd)}</div></div>
+              </div>
+              {v.bolsa.saldoAccion&&<div style={{padding:"4px 8px",background:"#064E3B22",borderRadius:4,marginBottom:8,fontSize:9,color:"#6EE7B7"}}>✅ PEN: {v.bolsa.saldoAccion} → {cajas.find(c=>c.id===v.bolsa.saldoDestPen)?.nm||"—"} | USD: {v.bolsa.saldoAccionUsd||"—"} → {cajas.find(c=>c.id===v.bolsa.saldoDestUsd)?.nm||"—"}</div>}
+              <div style={{fontSize:10,fontWeight:600,color:"#6B7A8D",marginBottom:4}}>📕 Gastos ({v.gastos.length}){v.bolsa.estLiq!=="LIQUIDADO"&&<button className="bt ba" style={{fontSize:8,marginLeft:8}} onClick={()=>setGastoModal({vjId:v.id})}>+ Agregar Gasto</button>}</div>
+              {v.gastos.length>0?<table className="tbl"><thead><tr><th>Cat.</th><th>Doc</th><th>Nro</th><th>Proveedor</th><th>ID</th><th>Mon</th><th>Monto</th><th>TC</th><th>Base</th><th>IGV</th><th>Total</th><th></th></tr></thead><tbody>
+                {v.gastos.map((g,i)=><tr key={i}><td style={{fontWeight:600,fontSize:9}}>{g.cat}</td><td><B t={g.tdoc} bg={dC(g.tdoc)[0]} c={dC(g.tdoc)[1]}/></td><td className="mn" style={{fontSize:8}}>{g.ndoc}</td><td style={{fontSize:9}}>{g.prov}</td><td style={{fontSize:8,color:"#3E4A5A"}}>{g.provTdoc?`${g.provTdoc}:${g.provNdoc}`:""}</td><td className="mn" style={{fontSize:8}}>{g.mon}</td><td className="mn">{g.mon==="USD"?"$"+fN(g.monto):fS(g.monto)}</td><td className="mn" style={{fontSize:8}}>{g.tc!==1?g.tc:""}</td><td className="mn">{fS(g.base)}</td><td className="mn" style={{color:g.igv>0?"#F59E0B":"#2A3344"}}>{fS(g.igv)}</td><td className="mn" style={{fontWeight:600,color:"#34D399"}}>{fS(g.tot)}</td>
+                  <td style={{whiteSpace:"nowrap"}}>{v.bolsa.estLiq!=="LIQUIDADO"&&<><IB i="✏️" t="Editar" onClick={()=>setGastoModal({vjId:v.id,gasto:g,idx:i})}/><IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>delGasto(v.id,i)}/></>}</td></tr>)}
+              </tbody></table>:<div style={{fontSize:10,color:"#3E4A5A",padding:8,textAlign:"center"}}>Sin gastos registrados</div>}
+              <div style={{marginTop:8,padding:6,background:"#181E2A33",borderRadius:4,display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(100px,1fr))",gap:4,fontSize:8}}>
+                {CATS_G.map(cat=>{const t=v.gastos.filter(g=>g.cat===cat).reduce((s,g)=>s+g.tot,0);return t>0?<div key={cat} style={{display:"flex",justifyContent:"space-between",padding:"2px 4px"}}><span style={{color:"#6B7A8D"}}>{cat}</span><span className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{fS(t)}</span></div>:null}).filter(Boolean)}
+              </div>
+            </div>
+          )})()}
+          <div style={{marginTop:6,fontSize:10,fontWeight:600,color:"#6B7A8D",marginBottom:4}}>🏦 Cajas y Bancos</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:6}}>
+            {cajas.map(c=><div key={c.id} className="cd" style={{padding:8}}>
+              <div style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>{c.tipo==="BANCO"?"🏦":"💰"} {c.nm}</div>
+              <div style={{display:"flex",gap:8,marginTop:2}}><div><div style={{fontSize:7,color:"#3E4A5A"}}>PEN</div><div className="mn" style={{fontSize:11,fontWeight:700,color:"#34D399"}}>{fS(c.saldo)}</div></div>
+              {(c.saldoUsd||0)>0&&<div><div style={{fontSize:7,color:"#3E4A5A"}}>USD</div><div className="mn" style={{fontSize:11,fontWeight:700,color:"#93C5FD"}}>${fN(c.saldoUsd)}</div></div>}</div>
+            </div>)}
+          </div>
         </div>}
         {view==="documentos"&&<div style={{animation:"su .2s"}}>
           <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>📎 Gestión Documentaria</h2><button className="bt ba">+ Subir Documento</button></div>
@@ -280,7 +350,7 @@ export default function App(){
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:8}}>
               <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Soles</div><div className="mn" style={{fontSize:15,fontWeight:700,color:"#34D399"}}>{fS(v.bolsa.pen)}</div></div>
               <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Dólares</div><div className="mn" style={{fontSize:15,fontWeight:700,color:"#93C5FD"}}>${fN(v.bolsa.usd)}</div><div style={{fontSize:8,color:"#3E4A5A"}}>TC: {v.bolsa.tcUsd}</div></div>
-              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Total PEN</div><div className="mn" style={{fontSize:15,fontWeight:700,color:"#F59E0B"}}>{fS(v.bolsa.totalPen)}</div></div>
+              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Total PEN</div><div className="mn" style={{fontSize:15,fontWeight:700,color:"#F59E0B"}}>{fS(bTP(v.bolsa))}</div></div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
     {vjModal&&(()=>{
@@ -305,7 +375,7 @@ export default function App(){
         if(!fm.tr||!fm.con||!fm.ruta){alert("Complete unidad de transporte, conductor y ruta");return}
         const d={id:nId,cod:nCod,fP:fm.fP,fS:fm.fS,fL:fm.fL,tr:parseInt(fm.tr),con:parseInt(fm.con),ruta:parseInt(fm.ruta),cli:parseInt(fm.cli)||null,serv:fm.serv,peso:parseFloat(fm.peso)||0,carga:fm.carga,est:fm.est,
           semi:parseInt(fm.semi)||null,contenedor:fm.contenedor||"",otro:fm.otro||"",
-          bolsa:{pen:parseFloat(fm.bolsaPen)||0,usd:parseFloat(fm.bolsaUsd)||0,tcUsd:parseFloat(fm.bolsaTc)||3.798,totalPen:bTot},
+          bolsa:{pen:parseFloat(fm.bolsaPen)||0,orPen:ev?.bolsa?.orPen||null,usd:parseFloat(fm.bolsaUsd)||0,orUsd:ev?.bolsa?.orUsd||null,tcUsd:parseFloat(fm.bolsaTc)||3.798,estLiq:ev?.bolsa?.estLiq||"PENDIENTE"},
           gastos:ev?.gastos||[],ingresos:ev?.ingresos||[],
           estDetalle:needsDet?{motivo:fm.estMotivo,ubicacion:fm.estUbicacion,desde:fm.estDesde,hasta:fm.estHasta}:null};
         saveVj(d)};
@@ -400,8 +470,110 @@ export default function App(){
           <button className="bt ba" style={{fontWeight:600}} onClick={doSave}>{isEdit?"💾 Guardar":"➕ Crear Viaje"}</button>
         </div>
       </div></div>)})()}
+    {gastoModal&&(()=>{const isEd=!!gastoModal.gasto;const gf=gastoModal._f||{cat:gastoModal.gasto?.cat||"Comb.Local",tdoc:gastoModal.gasto?.tdoc||"FACTURA",ndoc:gastoModal.gasto?.ndoc||"",prov:gastoModal.gasto?.prov||"",provTdoc:gastoModal.gasto?.provTdoc||"RUC",provNdoc:gastoModal.gasto?.provNdoc||"",mon:gastoModal.gasto?.mon||"PEN",monto:gastoModal.gasto?.monto||0,tc:gastoModal.gasto?.tc||1,igvPct:gastoModal.gasto?.igv>0?18:0};
+      const setGf=v=>setGastoModal(p=>({...p,_f:typeof v==="function"?v(p._f||gf):v}));const upG=(k,val)=>setGf(p=>({...p,[k]:val}));
+      const monto=parseFloat(gf.monto)||0,tc=parseFloat(gf.tc)||1,igvPct=parseFloat(gf.igvPct)||0;
+      const totBruto=monto*tc,base=igvPct>0?totBruto/(1+igvPct/100):totBruto,igv=totBruto-base;
+      const vj=viajes.find(x=>x.id===gastoModal.vjId),bolsaMon=gf.mon==="PEN"?vj?.bolsa?.pen:vj?.bolsa?.usd,
+        gastMon=gf.mon==="PEN"?vj?.gastos.filter(g=>g.mon==="PEN").reduce((s,g)=>s+g.tot,0):vj?.gastos.filter(g=>g.mon!=="PEN").reduce((s,g)=>s+g.monto,0),
+        dispMon=(bolsaMon||0)-(gastMon||0);
+      const GIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      const doSaveG=()=>{if(!gf.cat||monto<=0){alert("Complete categoría y monto");return}
+        const g={cat:gf.cat,tdoc:gf.tdoc,ndoc:gf.ndoc,prov:gf.prov,provTdoc:gf.provTdoc,provNdoc:gf.provNdoc,mon:gf.mon,monto,tc,base:Math.round(base*100)/100,igv:Math.round(igv*100)/100,tot:Math.round(totBruto*100)/100};
+        if(isEd)updGasto(gastoModal.vjId,gastoModal.idx,g);else addGasto(gastoModal.vjId,g);setGastoModal(null)};
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setGastoModal(null)}><div className="mo" style={{maxWidth:540,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:6}}>{isEd?"✏️ Editar Gasto":"➕ Nuevo Gasto"} — {vj?.cod}</div>
+        <div style={{display:"flex",gap:8,marginBottom:8,fontSize:9}}><span style={{color:"#34D399"}}>Bolsa {gf.mon}: {gf.mon==="PEN"?fS(bolsaMon||0):"$"+fN(bolsaMon||0)}</span><span style={{color:dispMon>=0?"#6B7A8D":"#F87171"}}>Disponible: {gf.mon==="PEN"?fS(dispMon):"$"+fN(dispMon)}</span></div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Categoría *</label><select value={gf.cat} onChange={e=>upG("cat",e.target.value)} style={GIS}>{CATS_G.map(c=><option key={c}>{c}</option>)}</select></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Tipo Doc</label><select value={gf.tdoc} onChange={e=>upG("tdoc",e.target.value)} style={GIS}>{TDOCS.map(t=><option key={t}>{t}</option>)}</select></div>
+          </div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Nro Documento</label><input value={gf.ndoc} onChange={e=>upG("ndoc",e.target.value)} style={GIS} placeholder="Ej: F001-1234"/></div>
+          <div style={{fontSize:9,fontWeight:600,color:"#6B7A8D",marginTop:2}}>Proveedor</div>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Razón Social / Nombre</label><input value={gf.prov} onChange={e=>upG("prov",e.target.value)} style={GIS} placeholder="Ej: Grifo Repsol"/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Tipo ID</label><select value={gf.provTdoc} onChange={e=>upG("provTdoc",e.target.value)} style={GIS}>{TDOC_ID.map(t=><option key={t}>{t}</option>)}</select></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Nro ID</label><input value={gf.provNdoc} onChange={e=>upG("provNdoc",e.target.value)} style={GIS} placeholder="Ej: 20481234567"/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Moneda</label><select value={gf.mon} onChange={e=>{upG("mon",e.target.value);if(e.target.value==="PEN")upG("tc",1)}} style={GIS}><option>PEN</option><option>USD</option><option>COP</option></select></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Monto *</label><input type="number" value={gf.monto} onChange={e=>upG("monto",e.target.value)} style={GIS} step="0.01" min="0"/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>TC</label><input type="number" value={gf.tc} onChange={e=>upG("tc",e.target.value)} style={GIS} step="0.001" disabled={gf.mon==="PEN"}/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>IGV %</label><select value={gf.igvPct} onChange={e=>upG("igvPct",e.target.value)} style={GIS}><option value={0}>0%</option><option value={18}>18%</option></select></div>
+          </div>
+          <div className="bx" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginTop:2}}>
+            <div style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>BASE</div><div className="mn" style={{fontSize:12,fontWeight:700,color:"#F59E0B"}}>{fS(base)}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>IGV</div><div className="mn" style={{fontSize:12,fontWeight:700,color:igv>0?"#818CF8":"#2A3344"}}>{fS(igv)}</div></div>
+            <div style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>TOTAL PEN</div><div className="mn" style={{fontSize:12,fontWeight:700,color:"#34D399"}}>{fS(totBruto)}</div></div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
+            <button className="bt" onClick={()=>setGastoModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={doSaveG}>{isEd?"💾 Guardar":"➕ Agregar"}</button>
+          </div>
+        </div>
+      </div></div>)})()}
+    {bolsaModal&&(()=>{const v=viajes.find(x=>x.id===bolsaModal.vjId);const bf=bolsaModal._f||{orPen:v?.bolsa?.orPen||1,pen:v?.bolsa?.pen||0,orUsd:v?.bolsa?.orUsd||3,usd:v?.bolsa?.usd||0,tc:v?.bolsa?.tcUsd||3.798};
+      const setBf=v2=>setBolsaModal(p=>({...p,_f:typeof v2==="function"?v2(p._f||bf):v2}));const upB=(k,val)=>setBf(p=>({...p,[k]:val}));
+      const BIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setBolsaModal(null)}><div className="mo" style={{maxWidth:480,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>💰 Habilitar Bolsa — {v?.cod}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          <div style={{padding:8,background:"#064E3B11",border:"1px solid #064E3B33",borderRadius:6}}>
+            <div style={{fontSize:10,fontWeight:600,color:"#34D399",marginBottom:6}}>🇵🇪 Bolsa en Soles (PEN)</div>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
+              <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Origen PEN</label><select value={bf.orPen} onChange={e=>upB("orPen",parseInt(e.target.value))} style={BIS}>{cajas.map(c=><option key={c.id} value={c.id}>{c.tipo==="BANCO"?"🏦":"💰"} {c.nm} — S/ {fN(c.saldo)}</option>)}</select></div>
+              <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Monto S/</label><input type="number" value={bf.pen} onChange={e=>upB("pen",e.target.value)} style={BIS} step="0.01"/></div>
+            </div>
+          </div>
+          <div style={{padding:8,background:"#1E3A5F11",border:"1px solid #1E3A5F33",borderRadius:6}}>
+            <div style={{fontSize:10,fontWeight:600,color:"#93C5FD",marginBottom:6}}>🇺🇸 Bolsa en Dólares (USD)</div>
+            <div style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr",gap:8}}>
+              <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Origen USD</label><select value={bf.orUsd} onChange={e=>upB("orUsd",parseInt(e.target.value))} style={BIS}>{cajas.map(c=><option key={c.id} value={c.id}>{c.tipo==="BANCO"?"🏦":"💰"} {c.nm} — $ {fN(c.saldoUsd||0)}</option>)}</select></div>
+              <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Monto $</label><input type="number" value={bf.usd} onChange={e=>upB("usd",e.target.value)} style={BIS} step="0.01"/></div>
+              <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>TC</label><input type="number" value={bf.tc} onChange={e=>upB("tc",e.target.value)} style={BIS} step="0.001"/></div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="bt" onClick={()=>setBolsaModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={()=>{const pen=parseFloat(bf.pen)||0,usd=parseFloat(bf.usd)||0,tc=parseFloat(bf.tc)||1;
+              setCajas(p=>p.map(c=>{let s={...c};if(c.id===bf.orPen)s.saldo=c.saldo-pen;if(c.id===bf.orUsd)s.saldoUsd=(c.saldoUsd||0)-usd;return s}));
+              setBolsaOrigen(bolsaModal.vjId,bf.orPen,pen,bf.orUsd,usd,tc);setBolsaModal(null)}}>✅ Asignar Bolsa</button>
+          </div>
+        </div>
+      </div></div>)})()}
+    {saldoModal&&(()=>{const v=viajes.find(x=>x.id===saldoModal.vjId);const sf=saldoModal._f||{accionPen:"DEVUELTO",destPenId:1,accionUsd:"DEVUELTO",destUsdId:3};
+      const setSf=v2=>setSaldoModal(p=>({...p,_f:typeof v2==="function"?v2(p._f||sf):v2}));
+      const SIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setSaldoModal(null)}><div className="mo" style={{maxWidth:480,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:8}}>🔒 Cerrar Liquidación — {v?.cod}</div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+          <div className="bx" style={{textAlign:"center",borderTop:"2px solid #34D399"}}><div style={{fontSize:7,color:"#3E4A5A"}}>SALDO PEN</div><div className="mn" style={{fontSize:16,fontWeight:700,color:saldoModal.sPen>=0?"#34D399":"#F87171"}}>{fS(saldoModal.sPen)}</div></div>
+          <div className="bx" style={{textAlign:"center",borderTop:"2px solid #93C5FD"}}><div style={{fontSize:7,color:"#3E4A5A"}}>SALDO USD</div><div className="mn" style={{fontSize:16,fontWeight:700,color:saldoModal.sUsd>=0?"#93C5FD":"#F87171"}}>${fN(saldoModal.sUsd)}</div></div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {saldoModal.sPen>0&&<div style={{padding:8,background:"#064E3B11",border:"1px solid #064E3B33",borderRadius:6}}>
+            <div style={{fontSize:9,fontWeight:600,color:"#34D399",marginBottom:4}}>Saldo PEN: {fS(saldoModal.sPen)}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              {[["DEVUELTO","💰 Devolver"],["ARRASTRE","🔄 Arrastrar"]].map(([k,l])=><button key={k} onClick={()=>setSf(p=>({...p,accionPen:k}))} style={{padding:"4px",borderRadius:4,border:sf.accionPen===k?"2px solid #34D399":"1px solid #181E2A",background:sf.accionPen===k?"#064E3B22":"#0E1219",color:sf.accionPen===k?"#34D399":"#3E4A5A",cursor:"pointer",fontSize:9,fontFamily:"inherit"}}>{l}</button>)}
+            </div>
+            {sf.accionPen==="DEVUELTO"&&<select value={sf.destPenId} onChange={e=>setSf(p=>({...p,destPenId:parseInt(e.target.value)}))} style={{...SIS,marginTop:4}}>{cajas.map(c=><option key={c.id} value={c.id}>{c.nm}</option>)}</select>}
+          </div>}
+          {saldoModal.sUsd>0&&<div style={{padding:8,background:"#1E3A5F11",border:"1px solid #1E3A5F33",borderRadius:6}}>
+            <div style={{fontSize:9,fontWeight:600,color:"#93C5FD",marginBottom:4}}>Saldo USD: ${fN(saldoModal.sUsd)}</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              {[["DEVUELTO","💰 Devolver"],["ARRASTRE","🔄 Arrastrar"]].map(([k,l])=><button key={k} onClick={()=>setSf(p=>({...p,accionUsd:k}))} style={{padding:"4px",borderRadius:4,border:sf.accionUsd===k?"2px solid #93C5FD":"1px solid #181E2A",background:sf.accionUsd===k?"#1E3A5F22":"#0E1219",color:sf.accionUsd===k?"#93C5FD":"#3E4A5A",cursor:"pointer",fontSize:9,fontFamily:"inherit"}}>{l}</button>)}
+            </div>
+            {sf.accionUsd==="DEVUELTO"&&<select value={sf.destUsdId} onChange={e=>setSf(p=>({...p,destUsdId:parseInt(e.target.value)}))} style={{...SIS,marginTop:4}}>{cajas.map(c=><option key={c.id} value={c.id}>{c.nm}</option>)}</select>}
+          </div>}
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:4}}>
+            <button className="bt" onClick={()=>setSaldoModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={()=>cerrarLiq(saldoModal.vjId,sf.accionPen,sf.destPenId,sf.accionUsd,sf.destUsdId)}>🔒 Cerrar Liquidación</button>
+          </div>
+        </div>
+      </div></div>)})()}
     {quickAdd&&<div className="ov" style={{zIndex:60}} onClick={()=>setQuickAdd(null)}><div className="mo" style={{maxWidth:420,padding:16}} onClick={e=>e.stopPropagation()}>
-      <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>➕ {quickAdd.type==="unidad"?"Nueva Unidad de Transporte":quickAdd.type==="conductor"?"Nuevo Conductor":quickAdd.type==="ruta"?"Nueva Ruta":quickAdd.type==="cliente"?"Nuevo Cliente":"Nuevo Semirremolque"}</div>
+      <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>➕ {quickAdd.type==="unidad"?"Nueva Unidad de Transporte":quickAdd.type==="conductor"?"Nuevo Conductor":quickAdd.type==="ruta"?"Nueva Ruta":quickAdd.type==="cliente"?"Nuevo Cliente":quickAdd.type==="caja"?"Nueva Caja/Banco":"Nuevo Semirremolque"}</div>
       {(()=>{const QIS={width:"100%",padding:"6px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:11,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
         const QL={fontSize:9,color:"#6B7A8D",marginBottom:2,display:"block"};
         const upQ=(k,v)=>setQuickAdd(p=>({...p,fields:{...p.fields,[k]:v}}));
@@ -426,12 +598,15 @@ export default function App(){
           <div><label style={QL}>RUC / ID Fiscal</label><input value={quickAdd.fields.ruc} onChange={e=>upQ("ruc",e.target.value)} style={QIS}/></div>
           <div><label style={QL}>País</label><select value={quickAdd.fields.pa} onChange={e=>upQ("pa",e.target.value)} style={QIS}><option value="PE">PE</option><option value="EC">EC</option><option value="CO">CO</option></select></div></div>
           <button className="bt ba" onClick={()=>{if(!quickAdd.fields.rs){alert("Ingrese razón social");return}addCli(quickAdd.fields)}}>✓ Registrar Cliente</button></>}
+        {quickAdd.type==="caja"&&<><div><label style={QL}>Nombre *</label><input value={quickAdd.fields.nm} onChange={e=>upQ("nm",e.target.value)} style={QIS} placeholder="Ej: Caja Oficina, BCP Ahorros"/></div>
+          <div><label style={QL}>Tipo</label><select value={quickAdd.fields.tipo} onChange={e=>upQ("tipo",e.target.value)} style={QIS}><option value="CAJA">CAJA</option><option value="BANCO">BANCO</option></select></div>
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.nm){alert("Ingrese nombre");return}addCaja(quickAdd.fields.nm,quickAdd.fields.tipo);setQuickAdd(null)}}>✓ Registrar Caja/Banco</button></>}
         <button className="bt" style={{marginTop:4}} onClick={()=>setQuickAdd(null)}>Cancelar</button>
       </div>)})()}
     </div></div>}
-              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Bolsa</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F59E0B"}}>{fS(v.bolsa.totalPen)}</div></div>
+              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Bolsa</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F59E0B"}}>{fS(bTP(v.bolsa))}</div></div>
               <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Gastado</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F87171"}}>{fS(l.tGI)}</div></div>
-              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Saldo</div><div className="mn" style={{fontSize:14,fontWeight:700,color:v.bolsa.totalPen-l.tGI>=0?"#34D399":"#F87171"}}>{fS(v.bolsa.totalPen-l.tGI)}</div></div>
+              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Saldo</div><div className="mn" style={{fontSize:14,fontWeight:700,color:bTP(v.bolsa)-l.tGI>=0?"#34D399":"#F87171"}}>{fS(bTP(v.bolsa)-l.tGI)}</div></div>
             </div>
             <div style={{marginTop:6,padding:6,background:"#78350F22",borderRadius:4,fontSize:9,color:"#FDE68A"}}>Bolsa incluye dinero para combustible Ecuador. Factura extranjera alimenta costeo real.</div></>}
         </div>

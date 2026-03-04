@@ -45,6 +45,15 @@ const KCOLS=[{k:"PROGRAMADO",l:"Programado",i:"📋",c:"#818CF8"},{k:"ESPERA_CAR
 function calcL(v,rutas){const tG=v.gastos.reduce((s,g)=>s+g.base,0),tGI=v.gastos.reduce((s,g)=>s+g.tot,0),cP=v.gastos.filter(g=>g.cat.includes("Comb")).reduce((s,g)=>s+g.tot,0),tI=v.ingresos.reduce((s,i)=>s+i.base,0),tIB=v.ingresos.reduce((s,i)=>s+i.tot,0),rt=gR(v.ruta,rutas),m=tI-tG,p=tI>0?(m/tI*100):0;return{tG,tGI,tI,tIB,cP,m,p,ck:rt?.km>0?tG/rt.km:0,ct:v.peso>0?tG/v.peso:0,pF:v.ingresos.filter(i=>i.estado==="PEND_FACTURAR"),pC:v.ingresos.filter(i=>i.estado==="PENDIENTE"),km:rt?.km||0}}
 export default function App(){
 
+
+// ── Toasts simples (sin librerías)
+const [toasts,setToasts]=useState([]);
+const toast=useCallback((msg)=>{
+  const id=Date.now()+Math.random();
+  setToasts(t=>[...t,{id,msg}]);
+  setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),2600);
+},[]);
+
 const useLS=(k,init)=>{
   const [v,setV]=useState(()=>{
     try{
@@ -101,13 +110,13 @@ const [newSePl,setNewSePl]=useState("");
 const [newSeTipo,setNewSeTipo]=useState("");
 const [newDocTypeName,setNewDocTypeName]=useState("");
 const [newDocTypeWarn,setNewDocTypeWarn]=useState(30);
-const [docForm,setDocForm]=useState({venc:"",nro:"",obs:""});
+const [docForm,setDocForm]=useState({venc:"",nro:"",obs:"",file:null});
 
 useEffect(()=>{
   if(!docEdit) return;
   const {key,docType}=docEdit;
   const cur=((docCtrl[key]||{})[docType.c])||{venc:"",nro:"",obs:""};
-  setDocForm({venc:cur.venc||"",nro:cur.nro||"",obs:cur.obs||""});
+  setDocForm({venc:cur.venc||"",nro:cur.nro||"",obs:cur.obs||"",file:cur.file||null});
 },[docEdit]); 
   const [sel,setSel]=useState(null);
   const [tab,setTab]=useState("resumen");
@@ -465,10 +474,10 @@ useEffect(()=>{
                       <div key={td.c} style={{padding:"4px",borderBottom:"1px solid #1A1F2E22",display:"flex",justifyContent:"center",alignItems:"center",background:ri%2?"#0E1219":"transparent"}}>
                         <button
                           onClick={()=>setDocEdit({key:uKey, unitLabel:`${r.pl} (${r.label})`, docType:td})}
-                          style={{cursor:"pointer",width:42,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,background:s.s==="FALTA"?"#1A1F2E33":s.s==="VIGENTE"?"#064E3B33":s.s==="POR_VENCER"?"#78350F33":"#7F1D1D33",color:s.c,border:`1px solid ${s.c}22`}}
+                          style={{position:"relative",cursor:"pointer",width:42,height:30,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,background:s.s==="FALTA"?"#1A1F2E33":s.s==="VIGENTE"?"#064E3B33":s.s==="POR_VENCER"?"#78350F33":"#7F1D1D33",color:s.c,border:`1px solid ${s.c}22`}}
                           title={title}
                         >
-                          {s.s==="FALTA"?"—":s.s==="VIGENTE"?"✓":s.d}
+                          {s.s==="FALTA"?"—":s.s==="VIGENTE"?"✓":s.d}{rec?.file?.name?<span style={{position:"absolute",top:2,right:4,fontSize:9,opacity:.9}}>📎</span>:null}
                         </button>
                       </div>
                     );
@@ -1174,7 +1183,7 @@ useEffect(()=>{
         setDocCtrl(prev=>{
           const out={...prev};
           const u={...(out[key]||{})};
-          u[docType.c]={venc:docForm.venc,nro:(docForm.nro||"").trim(),obs:(docForm.obs||"").trim()};
+          u[docType.c]={venc:docForm.venc,nro:(docForm.nro||"").trim(),obs:(docForm.obs||"").trim(),file:docForm.file||null};
           out[key]=u;
           return out;
         });
@@ -1183,6 +1192,16 @@ useEffect(()=>{
     </div>
   </div>
 </div></div>}
+
+
+{/* Toast container */}
+<div style={{position:"fixed",right:14,bottom:14,zIndex:9999,display:"grid",gap:8}}>
+  {toasts.map(t=>(
+    <div key={t.id} style={{minWidth:220,maxWidth:360,background:"#0B0F17",border:"1px solid #1A2333",color:"#E5E7EB",padding:"10px 12px",borderRadius:12,boxShadow:"0 10px 30px rgba(0,0,0,.35)",fontSize:12,fontWeight:700}}>
+      {t.msg}
+    </div>
+  ))}
+</div>
 
 
 </div>);

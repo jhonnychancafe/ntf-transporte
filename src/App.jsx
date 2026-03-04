@@ -16,6 +16,7 @@ const CAJAS_I=[{id:1,nm:"Caja Chica",tipo:"CAJA",saldo:15000,saldoUsd:500},{id:2
 const gU=(id,a)=>a.find(u=>u.id===id),gC=(id,a)=>a.find(c=>c.id===id),gR=(id,a)=>a.find(r=>r.id===id),gCl=(id,a)=>a.find(c=>c.id===id),gSm=(id,a)=>a.find(s=>s.id===id);
 const bTP=b=>b.pen+(b.usd*(b.tcUsd||0));
 const TDOC_ID=["RUC","DNI","CE","PASAPORTE","RUC_EXT","SIN_DOC"];
+const MOVS_I=[{id:1,fecha:"2026-02-10",cId:1,tp:"SALIDA",con:"Bolsa VJ-0001 PEN",ref:"VJ-2026-0001",mon:"PEN",mt:1500},{id:2,fecha:"2026-02-10",cId:1,tp:"SALIDA",con:"Bolsa VJ-0001 USD",ref:"VJ-2026-0001",mon:"USD",mt:500},{id:3,fecha:"2026-02-14",cId:3,tp:"SALIDA",con:"Bolsa VJ-0002 USD",ref:"VJ-2026-0002",mon:"USD",mt:600},{id:4,fecha:"2026-02-18",cId:2,tp:"SALIDA",con:"Bolsa VJ-0003 PEN",ref:"VJ-2026-0003",mon:"PEN",mt:800},{id:5,fecha:"2026-02-12",cId:1,tp:"INGRESO",con:"Dev.saldo VJ-0001",ref:"VJ-2026-0001",mon:"PEN",mt:306}];
 const COMPRAS_I=[
   {id:1,fecha:"2026-02-10",prov:"PetroEcuador S.A.",tdoc:"FACT_EXT",ndoc:"001-0045892",gal:800,puUsd:2.35,totUsd:1880,tc:3.785,base:7115.80,igv:0,tot:7115.80,cu:8.89,lote:"LOT-001",vjId:1},
   {id:2,fecha:"2026-02-14",prov:"PetroEcuador S.A.",tdoc:"FACT_EXT",ndoc:"001-0045978",gal:900,puUsd:2.38,totUsd:2142,tc:3.792,base:8122.46,igv:0,tot:8122.46,cu:9.03,lote:"LOT-002",vjId:2},
@@ -50,6 +51,11 @@ export default function App(){
   const [rutas,setRutas]=useState(RUTAS_I);
   const [clis,setClis]=useState(CLI_I);
   const [cajas,setCajas]=useState(CAJAS_I);
+  const [movs,setMovs]=useState(MOVS_I);
+  const [cajaDetId,setCajaDetId]=useState(null);
+  const [movModal,setMovModal]=useState(null);
+  const [combModal,setCombModal]=useState(null);
+  const [docModal,setDocModal]=useState(null);
   const [compras,setCompras]=useState(COMPRAS_I);
   const [docs,setDocs]=useState(DOCS_I);
   const [sel,setSel]=useState(null);
@@ -81,10 +87,15 @@ export default function App(){
     return{...v,bolsa:{...v.bolsa,estLiq:"LIQUIDADO",saldoAccion:accionPen,saldoDestPen:destPenId,saldoAccionUsd:accionUsd,saldoDestUsd:destUsdId}}}));
     setSaldoModal(null)};
   const addCaja=(nm,tipo)=>{const id=nxId(cajas);setCajas(p=>[...p,{id,nm,tipo:tipo||"CAJA",saldo:0,saldoUsd:0}]);return id};
+  const regMov=(cId,tp,con,ref,mon,mt)=>{const c=cajas.find(x=>x.id===cId);if(!c)return;const id=nxId(movs);const f=new Date().toISOString().slice(0,10);setMovs(p=>[{id,fecha:f,cId,tp,con,ref,mon,mt},...p]);setCajas(p=>p.map(x=>x.id===cId?(mon==="USD"?{...x,saldoUsd:tp==="INGRESO"?(x.saldoUsd||0)+mt:(x.saldoUsd||0)-mt}:{...x,saldo:tp==="INGRESO"?x.saldo+mt:x.saldo-mt}):x))};
+  const saveComb=(d,ed,idx)=>{if(ed){setCompras(p=>p.map((c,i)=>i===idx?{...c,...d}:c))}else{setCompras(p=>[...p,{...d,id:nxId(compras)}])}setCombModal(null)};
+  const saveDoc=(d,ed,idx)=>{if(ed){setDocs(p=>p.map((x,i)=>i===idx?{...x,...d}:x))}else{setDocs(p=>[...p,{...d,id:nxId(docs)}])}setDocModal(null)};
+  const emitFact=(vjId,iIdx)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,ingresos:v.ingresos.map((ing,i)=>i===iIdx?{...ing,tdoc:"FACTURA",serie:ing.serie||"F001",nro:ing.nro||String(nxId(docs)).padStart(5,"0"),estado:"PENDIENTE",fecha:TODAY}:ing)}:v));
+  const regCobro=(vjId,iIdx)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,ingresos:v.ingresos.map((ing,i)=>i===iIdx?{...ing,estado:"COBRADO",fCobro:TODAY}:ing)}:v));
   const liq=useMemo(()=>{const m={};viajes.forEach(v=>{m[v.id]=calcL(v,rutas)});return m},[viajes,rutas]);
   const regC=useMemo(()=>{const r=[];viajes.forEach(v=>v.gastos.forEach(g=>{r.push({f:v.fS||v.fP||"",vj:v.cod,tdoc:g.tdoc,ndoc:g.ndoc,prov:g.prov,base:g.base,igv:g.igv,tot:g.tot,cat:g.cat})}));return r.sort((a,b)=>a.f.localeCompare(b.f))},[viajes]);
   const regV=useMemo(()=>{const r=[];viajes.forEach(v=>v.ingresos.forEach(i=>{const c=gCl(i.cli,clis);r.push({f:i.fecha||"",vj:v.cod,tdoc:i.tdoc,sn:`${i.serie}-${i.nro}`,cli:c?.rs,ruc:c?.ruc,base:i.base,igv:i.igv,tot:i.tot,est:i.estado})}));return r.sort((a,b)=>(a.f||"z").localeCompare(b.f||"z"))},[viajes,clis]);
-  const pnd=useMemo(()=>{const pF=[],pC=[];viajes.forEach(v=>v.ingresos.forEach(i=>{if(i.estado==="PEND_FACTURAR")pF.push({vj:v.cod,cli:gCl(i.cli,clis)?.rs,tot:i.tot});if(i.estado==="PENDIENTE")pC.push({vj:v.cod,cli:gCl(i.cli,clis)?.rs,tot:i.tot,sn:`${i.serie}-${i.nro}`,f:i.fecha})}));return{pF,pC}},[viajes,clis]);
+  const pnd=useMemo(()=>{const pF=[],pC=[];viajes.forEach(v=>v.ingresos.forEach((i,ix)=>{if(i.estado==="PEND_FACTURAR")pF.push({vj:v.cod,vjId:v.id,iIdx:ix,cli:gCl(i.cli,clis)?.rs,tot:i.tot});if(i.estado==="PENDIENTE")pC.push({vj:v.cod,vjId:v.id,iIdx:ix,cli:gCl(i.cli,clis)?.rs,tot:i.tot,sn:`${i.serie}-${i.nro}`,f:i.fecha})}));return{pF,pC}},[viajes,clis]);
   const st=useMemo(()=>{const f=viajes.filter(v=>v.est==="FINALIZADO"),tI=f.reduce((s,v)=>s+liq[v.id].tI,0),tC=f.reduce((s,v)=>s+liq[v.id].tG,0);return{tI,tC,mg:tI>0?((tI-tC)/tI*100):0,eR:viajes.filter(v=>v.est==="EN_RUTA").length,pr:viajes.filter(v=>v.est==="PROGRAMADO").length,fn:f.length,nPF:pnd.pF.length,tPC:pnd.pC.reduce((s,p)=>s+p.tot,0),tPF:pnd.pF.reduce((s,p)=>s+p.tot,0)}},[viajes,liq,pnd]);
   const delV=useCallback(id=>{setViajes(p=>p.filter(v=>v.id!==id));setCfm(null);setSel(null)},[]);
   const delCo=useCallback(id=>{setCompras(p=>p.filter(c=>c.id!==id));setCfm(null)},[]);
@@ -100,7 +111,7 @@ export default function App(){
   const B=({t,bg,c:cl})=><span style={{display:"inline-flex",padding:"2px 6px",borderRadius:4,fontSize:9,fontWeight:600,background:bg,color:cl,whiteSpace:"nowrap"}}>{t}</span>;
   const dC=t=>t==="FACTURA"?["#064E3B","#6EE7B7"]:t==="FACT_EXT"?["#1E3A5F","#93C5FD"]:t==="DOC_INT"||t==="DOC_INTERNO"?["#3B0764","#C4B5FD"]:t==="BOLETA"?["#78350F","#FDE68A"]:["#1F2937","#9CA3AF"];
   const IB=({i,onClick,c,t})=><button title={t} onClick={onClick} style={{background:"none",border:"none",cursor:"pointer",fontSize:12,padding:"1px 3px",opacity:.5,color:c||"inherit"}} onMouseEnter={e=>e.target.style.opacity=1} onMouseLeave={e=>e.target.style.opacity=.5}>{i}</button>;
-  const NAV=[{k:"dashboard",l:"Dashboard",i:"📊"},{k:"viajes",l:"Viajes",i:"🚛"},{k:"combustible",l:"Combustible",i:"⛽"},{k:"liquidacion",l:"Liquidación",i:"💰"},{k:"documentos",l:"Documentos",i:"📎"},{k:"regcompras",l:"Reg.Compras",i:"📕"},{k:"regventas",l:"Reg.Ventas",i:"📗"},{k:"cuentas",l:"Ctas x Cobrar",i:"💳"}];
+  const NAV=[{k:"dashboard",l:"Dashboard",i:"📊"},{k:"viajes",l:"Viajes",i:"🚛"},{k:"combustible",l:"Combustible",i:"⛽"},{k:"liquidacion",l:"Liquidación",i:"💰"},{k:"documentos",l:"Documentos",i:"📎"},{k:"regcompras",l:"Reg.Compras",i:"📕"},{k:"regventas",l:"Reg.Ventas",i:"📗"},{k:"cajabancos",l:"Caja/Bancos",i:"🏦"},{k:"cuentas",l:"Ctas x Cobrar",i:"💳"}];
   return(<div style={{fontFamily:"'IBM Plex Sans',sans-serif",background:"#07080C",color:"#B8C4D4",minHeight:"100vh"}}>
     <style>{`@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
       @keyframes su{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
@@ -192,16 +203,16 @@ export default function App(){
           </div>
         </div>}
         {view==="combustible"&&<div style={{animation:"su .2s"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>⛽ Compras Combustible Ecuador</h2><div style={{fontSize:9,color:"#F59E0B"}}>Pagadas con bolsa de viaje → Costo se carga al viaje</div></div></div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>⛽ Compras Combustible Ecuador</h2><div style={{fontSize:9,color:"#F59E0B"}}>Pagadas con bolsa de viaje → Costo se carga al viaje</div></div><button className="bt ba" onClick={()=>setCombModal({mode:"new"})}>+ Compra</button></div>
           <div className="cd" style={{overflow:"auto"}}>
             <table className="tbl"><thead><tr><th>Lote</th><th>Fecha</th><th>Proveedor</th><th>Doc</th><th>Gal</th><th>P.U.$</th><th>TC</th><th>Total S/</th><th>C.U.</th><th>Viaje</th><th></th></tr></thead><tbody>
-              {compras.map(c=>{const vj=viajes.find(v=>v.id===c.vjId);return(<tr key={c.id}>
+              {compras.map((c,ci)=>{const vj=viajes.find(v=>v.id===c.vjId);return(<tr key={c.id}>
                 <td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{c.lote}</td><td className="mn" style={{color:"#6B7A8D"}}>{fD(c.fecha)}</td>
                 <td style={{fontSize:9}}>{c.prov}</td><td><B t={c.tdoc} bg={dC(c.tdoc)[0]} c={dC(c.tdoc)[1]}/></td>
                 <td className="mn" style={{fontWeight:600}}>{fN(c.gal)}</td><td className="mn">${n2(c.puUsd)}</td><td className="mn">{c.tc}</td>
                 <td className="mn" style={{fontWeight:600,color:"#34D399"}}>{fS(c.tot)}</td><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{fS(c.cu)}</td>
                 <td className="mn" style={{fontWeight:600,color:"#818CF8"}}>{vj?.cod||"—"}</td>
-                <td style={{whiteSpace:"nowrap"}}><IB i="✏️" t="Editar"/><IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>setCfm({t:"compra",id:c.id,l:c.lote})}/></td>
+                <td style={{whiteSpace:"nowrap"}}><IB i="✏️" t="Editar" onClick={()=>setCombModal({mode:"edit",data:c,idx:ci})}/><IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>setCfm({t:"compra",id:c.id,l:c.lote})}/></td>
               </tr>)})}
             </tbody></table></div>
         </div>}
@@ -271,11 +282,11 @@ export default function App(){
           </div>
         </div>}
         {view==="documentos"&&<div style={{animation:"su .2s"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>📎 Gestión Documentaria</h2><button className="bt ba">+ Subir Documento</button></div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>📎 Gestión Documentaria</h2><button className="bt ba" onClick={()=>setDocModal({mode:"new"})}>+ Documento</button></div>
           <div className="cd" style={{overflow:"auto"}}><table className="tbl"><thead><tr><th>Tipo</th><th>Número</th><th>Fecha</th><th>Entidad</th><th>Ref.</th><th>Descripción</th><th>Archivo</th><th></th></tr></thead><tbody>
-            {docs.map(d=><tr key={d.id}><td><B t={d.tipo} bg={dC(d.tipo)[0]} c={dC(d.tipo)[1]}/></td><td className="mn" style={{fontWeight:600}}>{d.nro}</td><td className="mn" style={{color:"#6B7A8D"}}>{fD(d.fecha)}</td><td style={{fontSize:9}}>{d.ent}</td><td className="mn" style={{fontSize:9,color:"#F59E0B"}}>{d.ref}</td><td style={{fontSize:9}}>{d.desc}</td>
+            {docs.map((d,di)=><tr key={d.id}><td><B t={d.tipo} bg={dC(d.tipo)[0]} c={dC(d.tipo)[1]}/></td><td className="mn" style={{fontWeight:600}}>{d.nro}</td><td className="mn" style={{color:"#6B7A8D"}}>{fD(d.fecha)}</td><td style={{fontSize:9}}>{d.ent}</td><td className="mn" style={{fontSize:9,color:"#F59E0B"}}>{d.ref}</td><td style={{fontSize:9}}>{d.desc}</td>
               <td>{d.arch?<span style={{color:"#34D399",fontSize:9}}>📄 {d.arch}</span>:<span style={{color:"#F87171",fontSize:9}}>⚠ Sin archivo</span>}</td>
-              <td style={{whiteSpace:"nowrap"}}><IB i="✏️" t="Editar"/><IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>setCfm({t:"doc",id:d.id,l:d.nro})}/></td></tr>)}
+              <td style={{whiteSpace:"nowrap"}}><IB i="✏️" t="Editar" onClick={()=>setDocModal({mode:"edit",data:d,idx:di})}/><IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>setCfm({t:"doc",id:d.id,l:d.nro})}/></td></tr>)}
           </tbody></table></div>
         </div>}
         {view==="regcompras"&&<div style={{animation:"su .2s"}}>
@@ -294,15 +305,46 @@ export default function App(){
               <td><B t={r.est==="COBRADO"?"COBRADO":r.est==="PENDIENTE"?"PEND.COBRO":"PEND.FACT"} bg={r.est==="COBRADO"?"#064E3B":r.est==="PENDIENTE"?"#7F1D1D44":"#3B076444"} c={r.est==="COBRADO"?"#6EE7B7":r.est==="PENDIENTE"?"#FCA5A5":"#C4B5FD"}/></td></tr>)}
           </tbody></table></div>
         </div>}
+        {view==="cajabancos"&&<div style={{animation:"su .2s"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>🏦 Caja y Bancos</h2><button className="bt ba" onClick={()=>setQuickAdd({type:"caja",fields:{nm:"",tipo:"CAJA"}})}>+ Nueva Caja/Banco</button></div>
+          <div style={{fontSize:9,color:"#6B7A8D",marginBottom:10}}>Control de ingresos, egresos y saldos</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(170px,1fr))",gap:8,marginBottom:10}}>
+            {cajas.map(c=><div key={c.id} className="cd" style={{padding:10,cursor:"pointer",border:cajaDetId===c.id?"1px solid #F59E0B":"1px solid transparent"}} onClick={()=>setCajaDetId(cajaDetId===c.id?null:c.id)}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><span style={{fontSize:10,fontWeight:600,color:"#F1F5F9"}}>{c.tipo==="BANCO"?"🏦":"💰"} {c.nm}</span><B t={c.tipo} bg={c.tipo==="BANCO"?"#1E3A5F":"#78350F"} c={c.tipo==="BANCO"?"#93C5FD":"#FDE68A"}/></div>
+              <div style={{display:"flex",gap:12}}><div><div style={{fontSize:7,color:"#3E4A5A"}}>PEN</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#34D399"}}>{fS(c.saldo)}</div></div><div><div style={{fontSize:7,color:"#3E4A5A"}}>USD</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#93C5FD"}}>${fN(c.saldoUsd||0)}</div></div></div>
+              <div style={{marginTop:4,fontSize:8,color:"#3E4A5A"}}>Movs: {movs.filter(m=>m.cId===c.id).length}</div>
+            </div>)}
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:10}}>{[["Total PEN",fS(cajas.reduce((s,c)=>s+c.saldo,0)),"#34D399"],["Total USD","$"+fN(cajas.reduce((s,c)=>s+(c.saldoUsd||0),0)),"#93C5FD"]].map(([l,v2,c2])=><div key={l} className="cd" style={{padding:8,textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>{l}</div><div className="mn" style={{fontSize:14,fontWeight:700,color:c2}}>{v2}</div></div>)}</div>
+          {cajaDetId&&(()=>{const cj=cajas.find(c=>c.id===cajaDetId);if(!cj)return null;const cms=movs.filter(m=>m.cId===cajaDetId).sort((a,b)=>b.id-a.id);return(
+            <div className="cd" style={{padding:12,animation:"su .15s"}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8}}>
+                <span style={{fontSize:13,fontWeight:700,color:"#F1F5F9"}}>{cj.nm}</span>
+                <div style={{display:"flex",gap:4}}>
+                  <button className="bt ba" style={{fontSize:8}} onClick={()=>setMovModal({cId:cajaDetId,tp:"INGRESO",mon:"PEN",mt:0,con:"",ref:""})}>+ Ingreso</button>
+                  <button className="bt" style={{fontSize:8,borderColor:"#F87171",color:"#F87171"}} onClick={()=>setMovModal({cId:cajaDetId,tp:"SALIDA",mon:"PEN",mt:0,con:"",ref:""})}>- Egreso</button>
+                  <button className="bt" onClick={()=>setCajaDetId(null)}>X</button>
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6,marginBottom:8}}>
+                <div className="bx" style={{textAlign:"center",borderTop:"2px solid #34D399"}}><div style={{fontSize:7,color:"#3E4A5A"}}>PEN</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#34D399"}}>{fS(cj.saldo)}</div></div>
+                <div className="bx" style={{textAlign:"center",borderTop:"2px solid #93C5FD"}}><div style={{fontSize:7,color:"#3E4A5A"}}>USD</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#93C5FD"}}>${fN(cj.saldoUsd||0)}</div></div>
+              </div>
+              {cms.length>0?<table className="tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Ref.</th><th>Mon</th><th>Monto</th></tr></thead><tbody>
+                {cms.map(m=><tr key={m.id}><td className="mn" style={{color:"#6B7A8D"}}>{fD(m.fecha)}</td><td><B t={m.tp} bg={m.tp==="INGRESO"?"#064E3B":"#7F1D1D44"} c={m.tp==="INGRESO"?"#6EE7B7":"#FCA5A5"}/></td><td style={{fontSize:9}}>{m.con}</td><td className="mn" style={{fontSize:8,color:"#F59E0B"}}>{m.ref}</td><td className="mn" style={{fontSize:8}}>{m.mon}</td><td className="mn" style={{fontWeight:600,color:m.tp==="INGRESO"?"#34D399":"#F87171"}}>{m.tp==="INGRESO"?"+":"-"}{m.mon==="USD"?"$"+fN(m.mt):fS(m.mt)}</td></tr>)}
+              </tbody></table>:<div style={{fontSize:10,color:"#3E4A5A",padding:8,textAlign:"center"}}>Sin movimientos</div>}
+            </div>
+          )})()}
+        </div>}
         {view==="cuentas"&&<div style={{animation:"su .2s"}}>
           <h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>💳 Estado de Cuenta</h2>
           {pnd.pF.length>0&&<><div style={{fontSize:11,fontWeight:600,color:"#A78BFA",marginBottom:6}}>📝 Pendientes de Facturar</div>
           <div className="cd" style={{overflow:"auto",marginBottom:12}}><table className="tbl"><thead><tr><th>Viaje</th><th>Cliente</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
-            {pnd.pF.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#A78BFA"}}>{p.vj}</td><td>{p.cli}</td><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{fS(p.tot)}</td><td><B t="PEND.FACT" bg="#3B076444" c="#C4B5FD"/></td><td><button className="bt ba" style={{fontSize:8}}>Emitir Factura</button></td></tr>)}
+            {pnd.pF.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#A78BFA"}}>{p.vj}</td><td>{p.cli}</td><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{fS(p.tot)}</td><td><B t="PEND.FACT" bg="#3B076444" c="#C4B5FD"/></td><td><button className="bt ba" style={{fontSize:8}} onClick={()=>emitFact(p.vjId,p.iIdx)}>Emitir Factura</button></td></tr>)}
           </tbody></table></div></>}
           {pnd.pC.length>0&&<><div style={{fontSize:11,fontWeight:600,color:"#F87171",marginBottom:6}}>💳 Pendientes de Cobro</div>
           <div className="cd" style={{overflow:"auto",marginBottom:12}}><table className="tbl"><thead><tr><th>Viaje</th><th>Doc.</th><th>Cliente</th><th>Fecha</th><th>Monto</th><th>Acción</th></tr></thead><tbody>
-            {pnd.pC.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{p.vj}</td><td className="mn">{p.sn}</td><td>{p.cli}</td><td className="mn">{fD(p.f)}</td><td className="mn" style={{fontWeight:600,color:"#F87171"}}>{fS(p.tot)}</td><td><button className="bt" style={{fontSize:8}}>Registrar Cobro</button></td></tr>)}
+            {pnd.pC.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{p.vj}</td><td className="mn">{p.sn}</td><td>{p.cli}</td><td className="mn">{fD(p.f)}</td><td className="mn" style={{fontWeight:600,color:"#F87171"}}>{fS(p.tot)}</td><td><button className="bt" style={{fontSize:8}} onClick={()=>regCobro(p.vjId,p.iIdx)}>Registrar Cobro</button></td></tr>)}
           </tbody></table></div></>}
           <div className="cd" style={{padding:10}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
             {[["Pend.Facturar",st.tPF,"#A78BFA"],["Pend.Cobro",st.tPC,"#F87171"],["Total Recaudar",st.tPC+st.tPF,"#F59E0B"]].map(([l,v,c])=><div key={l} className="bx" style={{textAlign:"center"}}><div style={{fontSize:8,color:"#3E4A5A",textTransform:"uppercase"}}>{l}</div><div className="mn" style={{fontSize:15,fontWeight:700,color:c}}>{fS(v)}</div></div>)}
@@ -353,6 +395,14 @@ export default function App(){
               <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Total PEN</div><div className="mn" style={{fontSize:15,fontWeight:700,color:"#F59E0B"}}>{fS(bTP(v.bolsa))}</div></div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Bolsa</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F59E0B"}}>{fS(bTP(v.bolsa))}</div></div>
+              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Gastado</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F87171"}}>{fS(l.tGI)}</div></div>
+              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Saldo</div><div className="mn" style={{fontSize:14,fontWeight:700,color:bTP(v.bolsa)-l.tGI>=0?"#34D399":"#F87171"}}>{fS(bTP(v.bolsa)-l.tGI)}</div></div>
+            </div>
+            <div style={{marginTop:6,padding:6,background:"#78350F22",borderRadius:4,fontSize:9,color:"#FDE68A"}}>Bolsa incluye dinero para combustible Ecuador. Factura extranjera alimenta costeo real.</div></>}
+        </div>
+      </>)})()}
+    </div></div>}
     {vjModal&&(()=>{
       const isEdit=vjModal.mode==="edit";
       const ev=isEdit?vjModal.vj:null;
@@ -604,14 +654,84 @@ export default function App(){
         <button className="bt" style={{marginTop:4}} onClick={()=>setQuickAdd(null)}>Cancelar</button>
       </div>)})()}
     </div></div>}
-              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Bolsa</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F59E0B"}}>{fS(bTP(v.bolsa))}</div></div>
-              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Gastado</div><div className="mn" style={{fontSize:14,fontWeight:700,color:"#F87171"}}>{fS(l.tGI)}</div></div>
-              <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Saldo</div><div className="mn" style={{fontSize:14,fontWeight:700,color:bTP(v.bolsa)-l.tGI>=0?"#34D399":"#F87171"}}>{fS(bTP(v.bolsa)-l.tGI)}</div></div>
-            </div>
-            <div style={{marginTop:6,padding:6,background:"#78350F22",borderRadius:4,fontSize:9,color:"#FDE68A"}}>Bolsa incluye dinero para combustible Ecuador. Factura extranjera alimenta costeo real.</div></>}
+    {movModal&&(()=>{const mf=movModal;const cj=cajas.find(c=>c.id===mf.cId);
+      const MIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      const upM=(k,v)=>setMovModal(p=>({...p,[k]:v}));const curr=mf.mon==="USD"?(cj?.saldoUsd||0):(cj?.saldo||0);const mt=parseFloat(mf.mt)||0;const ns=mf.tp==="INGRESO"?curr+mt:curr-mt;
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setMovModal(null)}><div className="mo" style={{maxWidth:440,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:mf.tp==="INGRESO"?"#34D399":"#F87171",marginBottom:8}}>{mf.tp==="INGRESO"?"Ingreso":"Egreso"} - {cj?.nm}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Moneda</label><select value={mf.mon} onChange={e=>upM("mon",e.target.value)} style={MIS}><option>PEN</option><option>USD</option></select></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Monto *</label><input type="number" value={mf.mt} onChange={e=>upM("mt",e.target.value)} style={MIS} step="0.01" min="0"/></div>
+          </div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Concepto *</label><input value={mf.con} onChange={e=>upM("con",e.target.value)} style={MIS} placeholder="Cobro factura, Pago proveedor"/></div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Referencia</label><input value={mf.ref} onChange={e=>upM("ref",e.target.value)} style={MIS} placeholder="VJ-2026-0001"/></div>
+          <div className="bx" style={{textAlign:"center",padding:8}}>
+            <div style={{fontSize:7,color:"#3E4A5A"}}>SALDO {mf.mon}: {mf.mon==="USD"?"$"+fN(curr):fS(curr)}</div>
+            <div style={{fontSize:11,fontWeight:700,color:ns>=0?"#34D399":"#F87171",marginTop:4}}>Nuevo: {mf.mon==="USD"?"$"+fN(ns):fS(ns)}</div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="bt" onClick={()=>setMovModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={()=>{if(mt<=0||!mf.con){alert("Complete monto y concepto");return}regMov(mf.cId,mf.tp,mf.con,mf.ref,mf.mon,mt);setMovModal(null)}}>Registrar</button>
+          </div>
         </div>
-      </>)})()}
-    </div></div>}
+      </div></div>)})()}
+    {combModal&&(()=>{const isEd=combModal.mode==="edit";const d=isEd?combModal.data:{};
+      const cf=combModal._f||{fecha:d.fecha||TODAY,prov:d.prov||"",tdoc:d.tdoc||"FACT_EXT",ndoc:d.ndoc||"",gal:d.gal||0,puUsd:d.puUsd||0,tc:d.tc||3.798,vjId:d.vjId||"",lote:d.lote||"LOT-"+String(nxId(compras)).padStart(3,"0")};
+      const upC=(k,v2)=>setCombModal(p=>({...p,_f:{...(p._f||cf),[k]:v2}}));const totU=(parseFloat(cf.gal)||0)*(parseFloat(cf.puUsd)||0);const tot=totU*(parseFloat(cf.tc)||0);const cu=parseFloat(cf.gal)>0?tot/parseFloat(cf.gal):0;
+      const CIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setCombModal(null)}><div className="mo" style={{maxWidth:500,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#F59E0B",marginBottom:8}}>⛽ {isEd?"Editar":"Nueva"} Compra Combustible</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Lote</label><input value={cf.lote} onChange={e=>upC("lote",e.target.value)} style={CIS}/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Fecha</label><input type="date" value={cf.fecha} onChange={e=>upC("fecha",e.target.value)} style={CIS}/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Viaje</label><select value={cf.vjId} onChange={e=>upC("vjId",parseInt(e.target.value)||"")} style={CIS}><option value="">—</option>{viajes.map(v=><option key={v.id} value={v.id}>{v.cod}</option>)}</select></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Proveedor *</label><input value={cf.prov} onChange={e=>upC("prov",e.target.value)} style={CIS} placeholder="PetroEcuador S.A."/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Doc</label><input value={cf.ndoc} onChange={e=>upC("ndoc",e.target.value)} style={CIS} placeholder="001-0045892"/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Galones *</label><input type="number" value={cf.gal} onChange={e=>upC("gal",e.target.value)} style={CIS} step="0.01"/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>P.U. USD *</label><input type="number" value={cf.puUsd} onChange={e=>upC("puUsd",e.target.value)} style={CIS} step="0.01"/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>TC</label><input type="number" value={cf.tc} onChange={e=>upC("tc",e.target.value)} style={CIS} step="0.001"/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+            <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>TOTAL USD</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#93C5FD"}}>${fN(totU)}</div></div>
+            <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>TOTAL PEN</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#34D399"}}>{fS(tot)}</div></div>
+            <div className="bx" style={{textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A"}}>C.U. S//GAL</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#F59E0B"}}>{fS(cu)}</div></div>
+          </div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="bt" onClick={()=>setCombModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={()=>{if(!cf.prov||parseFloat(cf.gal)<=0){alert("Complete proveedor y galones");return}saveComb({fecha:cf.fecha,prov:cf.prov,tdoc:cf.tdoc||"FACT_EXT",ndoc:cf.ndoc,gal:parseFloat(cf.gal),puUsd:parseFloat(cf.puUsd),totUsd:totU,tc:parseFloat(cf.tc),base:tot,igv:0,tot:tot,cu:cu,lote:cf.lote,vjId:parseInt(cf.vjId)||null},isEd,combModal.idx)}}>Guardar</button>
+          </div>
+        </div>
+      </div></div>)})()}
+    {docModal&&(()=>{const isEd=docModal.mode==="edit";const d=isEd?docModal.data:{};
+      const df=docModal._f||{tipo:d.tipo||"FACTURA",nro:d.nro||"",fecha:d.fecha||TODAY,ent:d.ent||"",ref:d.ref||"",desc:d.desc||"",arch:d.arch||""};
+      const upD=(k,v2)=>setDocModal(p=>({...p,_f:{...(p._f||df),[k]:v2}}));
+      const DIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setDocModal(null)}><div className="mo" style={{maxWidth:480,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#A78BFA",marginBottom:8}}>📎 {isEd?"Editar":"Nuevo"} Documento</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Tipo</label><select value={df.tipo} onChange={e=>upD("tipo",e.target.value)} style={DIS}>{["FACTURA","FACT_EXT","BOLETA","GUIA_REM","DOC_INT","CONTRATO","POLIZA","SOAT","OTRO"].map(t=><option key={t}>{t}</option>)}</select></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Numero *</label><input value={df.nro} onChange={e=>upD("nro",e.target.value)} style={DIS} placeholder="F001-00234"/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Fecha</label><input type="date" value={df.fecha} onChange={e=>upD("fecha",e.target.value)} style={DIS}/></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Entidad *</label><input value={df.ent} onChange={e=>upD("ent",e.target.value)} style={DIS} placeholder="NTF, PetroEcuador"/></div>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Referencia</label><input value={df.ref} onChange={e=>upD("ref",e.target.value)} style={DIS} placeholder="VJ-0001, LOT-001"/></div>
+          </div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Descripcion</label><input value={df.desc} onChange={e=>upD("desc",e.target.value)} style={DIS} placeholder="Descripcion del documento"/></div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Archivo</label><input value={df.arch} onChange={e=>upD("arch",e.target.value)} style={DIS} placeholder="nombre_archivo.pdf"/></div>
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="bt" onClick={()=>setDocModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={()=>{if(!df.nro||!df.ent){alert("Complete numero y entidad");return}saveDoc({tipo:df.tipo,nro:df.nro,fecha:df.fecha,ent:df.ent,ref:df.ref,desc:df.desc,arch:df.arch||null},isEd,docModal.idx)}}>Guardar</button>
+          </div>
+        </div>
+      </div></div>)})()}
     {cfm&&<div className="ov" onClick={()=>setCfm(null)}><div className="mo" style={{maxWidth:400,padding:20}} onClick={e=>e.stopPropagation()}>
       <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:8}}>⚠️ Confirmar eliminación</div>
       <div style={{fontSize:11,color:"#B8C4D4",marginBottom:16}}>¿Eliminar <strong style={{color:"#F59E0B"}}>{cfm.l}</strong>? Esta acción no se puede deshacer.</div>

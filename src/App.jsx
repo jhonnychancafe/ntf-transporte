@@ -1,9 +1,23 @@
-import { useState, useMemo, useCallback } from "react";
-const TODAY="2026-02-24";
+import { useState, useMemo, useCallback, useEffect } from "react";
+const TODAY = new Date().toISOString().slice(0,10);
 const n2=v=>v?.toFixed(2)??"—";
 const fD=d=>d?new Date(d+"T12:00:00").toLocaleDateString("es-PE",{day:"2-digit",month:"short",year:"numeric"}):"—";
 const fN=v=>v!=null?v.toLocaleString("es-PE",{minimumFractionDigits:2,maximumFractionDigits:2}):"—";
 const fS=v=>"S/ "+fN(v);
+function useLS(key, init){
+  const [val, setVal] = useState(() => {
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : init;
+    }catch{
+      return init;
+    }
+  });
+  useEffect(() => {
+    try{ localStorage.setItem(key, JSON.stringify(val)); }catch{}
+  }, [key, val]);
+  return [val, setVal];
+}
 const LOGO="data:image/png;base64,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";
 const UNI_I=[{id:1,pl:"ARR-903",mk:"INTL"},{id:4,pl:"ATW-887",mk:"INTL"},{id:6,pl:"X2C-881",mk:"VOLVO"},{id:8,pl:"V8J-827",mk:"INTL"},{id:9,pl:"ARF-761",mk:"VOLVO"},{id:17,pl:"ATS-900",mk:"VOLVO"},{id:27,pl:"AEV-885",mk:"KENW"},{id:28,pl:"ARX-819",mk:"FREIGHT"},{id:29,pl:"AUU-877",mk:"KENW"},{id:31,pl:"T9H-800",mk:"FREIGHT"}];
 const SEMI_I=[{id:1,pl:"T3S-001",tipo:"PLATAFORMA"},{id:2,pl:"T3S-002",tipo:"FURGON"},{id:3,pl:"T3S-003",tipo:"CAMA_BAJA"},{id:4,pl:"T3S-004",tipo:"PLATAFORMA"},{id:5,pl:"T3S-005",tipo:"TOLVA"}];
@@ -17,6 +31,7 @@ const gU=(id,a)=>a.find(u=>u.id===id),gC=(id,a)=>a.find(c=>c.id===id),gR=(id,a)=
 const bTP=b=>b.pen+(b.usd*(b.tcUsd||0));
 const TDOC_ID=["RUC","DNI","CE","PASAPORTE","RUC_EXT","SIN_DOC"];
 const MOVS_I=[{id:1,fecha:"2026-02-10",cId:1,tp:"SALIDA",con:"Bolsa VJ-0001 PEN",ref:"VJ-2026-0001",mon:"PEN",mt:1500},{id:2,fecha:"2026-02-10",cId:1,tp:"SALIDA",con:"Bolsa VJ-0001 USD",ref:"VJ-2026-0001",mon:"USD",mt:500},{id:3,fecha:"2026-02-14",cId:3,tp:"SALIDA",con:"Bolsa VJ-0002 USD",ref:"VJ-2026-0002",mon:"USD",mt:600},{id:4,fecha:"2026-02-18",cId:2,tp:"SALIDA",con:"Bolsa VJ-0003 PEN",ref:"VJ-2026-0003",mon:"PEN",mt:800},{id:5,fecha:"2026-02-12",cId:1,tp:"INGRESO",con:"Dev.saldo VJ-0001",ref:"VJ-2026-0001",mon:"PEN",mt:306}];
+const ALM_I=[{id:1,fecha:"2026-02-12",tp:"ENTRADA",gal:120,cuPen:8.89,tot:1066.80,ref:"LOT-001",vjRef:"VJ-2026-0001",uni:null,nota:"Descarga conductor Pérez"},{id:2,fecha:"2026-02-16",tp:"ENTRADA",gal:80,cuPen:9.12,tot:729.60,ref:"LOT-002",vjRef:"VJ-2026-0002",uni:null,nota:"Descarga conductor García"},{id:3,fecha:"2026-02-18",tp:"SALIDA",gal:50,cuPen:8.98,tot:449.00,ref:"DESP-001",vjRef:null,uni:9,nota:"Despacho ruta local Chiclayo-Lima"},{id:4,fecha:"2026-02-20",tp:"SALIDA",gal:30,cuPen:8.98,tot:269.40,ref:"DESP-002",vjRef:null,uni:8,nota:"Despacho ruta local Chiclayo-Trujillo"}];
 const COMPRAS_I=[
   {id:1,fecha:"2026-02-10",prov:"PetroEcuador S.A.",tdoc:"FACT_EXT",ndoc:"001-0045892",gal:800,puUsd:2.35,totUsd:1880,tc:3.785,base:7115.80,igv:0,tot:7115.80,cu:8.89,lote:"LOT-001",vjId:1},
   {id:2,fecha:"2026-02-14",prov:"PetroEcuador S.A.",tdoc:"FACT_EXT",ndoc:"001-0045978",gal:900,puUsd:2.38,totUsd:2142,tc:3.792,base:8122.46,igv:0,tot:8122.46,cu:9.03,lote:"LOT-002",vjId:2},
@@ -44,20 +59,27 @@ const KCOLS=[{k:"PROGRAMADO",l:"Programado",i:"📋",c:"#818CF8"},{k:"ESPERA_CAR
 function calcL(v,rutas){const tG=v.gastos.reduce((s,g)=>s+g.base,0),tGI=v.gastos.reduce((s,g)=>s+g.tot,0),cP=v.gastos.filter(g=>g.cat.includes("Comb")).reduce((s,g)=>s+g.tot,0),tI=v.ingresos.reduce((s,i)=>s+i.base,0),tIB=v.ingresos.reduce((s,i)=>s+i.tot,0),rt=gR(v.ruta,rutas),m=tI-tG,p=tI>0?(m/tI*100):0;return{tG,tGI,tI,tIB,cP,m,p,ck:rt?.km>0?tG/rt.km:0,ct:v.peso>0?tG/v.peso:0,pF:v.ingresos.filter(i=>i.estado==="PEND_FACTURAR"),pC:v.ingresos.filter(i=>i.estado==="PENDIENTE"),km:rt?.km||0}}
 export default function App(){
   const [view,setView]=useState("dashboard");
-  const [viajes,setViajes]=useState(VJS_I);
-  const [unis,setUnis]=useState(UNI_I);
-  const [semis,setSemis]=useState(SEMI_I);
-  const [conds,setConds]=useState(COND_I);
-  const [rutas,setRutas]=useState(RUTAS_I);
-  const [clis,setClis]=useState(CLI_I);
-  const [cajas,setCajas]=useState(CAJAS_I);
-  const [movs,setMovs]=useState(MOVS_I);
+  const [viajes,setViajes]=useLS("ntf_viajes",VJS_I);
+  const [unis,setUnis]=useLS("ntf_unidades",UNI_I);
+  const [semis,setSemis]=useLS("ntf_semis",SEMI_I);
+  const [conds,setConds]=useLS("ntf_conductores",COND_I);
+  const [rutas,setRutas]=useLS("ntf_rutas",RUTAS_I);
+  const [clis,setClis]=useLS("ntf_clientes",CLI_I);
+  const [cajas,setCajas]=useLS("ntf_cajas",CAJAS_I);
+  const [movs,setMovs]=useLS("ntf_movs",MOVS_I);
   const [cajaDetId,setCajaDetId]=useState(null);
   const [movModal,setMovModal]=useState(null);
   const [combModal,setCombModal]=useState(null);
   const [docModal,setDocModal]=useState(null);
-  const [compras,setCompras]=useState(COMPRAS_I);
-  const [docs,setDocs]=useState(DOCS_I);
+  const [toasts,setToasts]=useState([]);
+  const toast=(msg,kind="info")=>{const id=Date.now()+Math.random();setToasts(t=>[...t,{id,msg,kind}]);setTimeout(()=>setToasts(t=>t.filter(x=>x.id!==id)),3000)};
+  const [cobroModal,setCobroModal]=useState(null);
+  const [factModal,setFactModal]=useState(null);
+  const [almMov,setAlmMov]=useLS("ntf_alm_mov",ALM_I);
+  const [almModal,setAlmModal]=useState(null);
+  const [combTab,setCombTab]=useState("compras");
+  const [compras,setCompras]=useLS("ntf_comb_compras",COMPRAS_I);
+  const [docs,setDocs]=useLS("ntf_docs",DOCS_I);
   const [sel,setSel]=useState(null);
   const [tab,setTab]=useState("resumen");
   const [cfm,setCfm]=useState(null);
@@ -90,8 +112,8 @@ export default function App(){
   const regMov=(cId,tp,con,ref,mon,mt)=>{const c=cajas.find(x=>x.id===cId);if(!c)return;const id=nxId(movs);const f=new Date().toISOString().slice(0,10);setMovs(p=>[{id,fecha:f,cId,tp,con,ref,mon,mt},...p]);setCajas(p=>p.map(x=>x.id===cId?(mon==="USD"?{...x,saldoUsd:tp==="INGRESO"?(x.saldoUsd||0)+mt:(x.saldoUsd||0)-mt}:{...x,saldo:tp==="INGRESO"?x.saldo+mt:x.saldo-mt}):x))};
   const saveComb=(d,ed,idx)=>{if(ed){setCompras(p=>p.map((c,i)=>i===idx?{...c,...d}:c))}else{setCompras(p=>[...p,{...d,id:nxId(compras)}])}setCombModal(null)};
   const saveDoc=(d,ed,idx)=>{if(ed){setDocs(p=>p.map((x,i)=>i===idx?{...x,...d}:x))}else{setDocs(p=>[...p,{...d,id:nxId(docs)}])}setDocModal(null)};
-  const emitFact=(vjId,iIdx)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,ingresos:v.ingresos.map((ing,i)=>i===iIdx?{...ing,tdoc:"FACTURA",serie:ing.serie||"F001",nro:ing.nro||String(nxId(docs)).padStart(5,"0"),estado:"PENDIENTE",fecha:TODAY}:ing)}:v));
-  const regCobro=(vjId,iIdx)=>setViajes(p=>p.map(v=>v.id===vjId?{...v,ingresos:v.ingresos.map((ing,i)=>i===iIdx?{...ing,estado:"COBRADO",fCobro:TODAY}:ing)}:v));
+  const almStock=useMemo(()=>{let stk=0,val=0;almMov.sort((a,b)=>a.id-b.id).forEach(m=>{if(m.tp==="ENTRADA"){val+=m.gal*m.cuPen;stk+=m.gal}else{const cu=stk>0?val/stk:0;val-=m.gal*cu;stk-=m.gal}});return{stk:Math.round(stk*100)/100,val:Math.round(val*100)/100,cu:stk>0?Math.round(val/stk*100)/100:0}},[almMov]);
+  const addAlmMov=(tp,gal,cuPen,ref,vjRef,uniId,nota)=>{const id=nxId(almMov);const tot=Math.round(gal*cuPen*100)/100;setAlmMov(p=>[...p,{id,fecha:TODAY,tp,gal,cuPen,tot,ref,vjRef,uni:uniId||null,nota}])};
   const liq=useMemo(()=>{const m={};viajes.forEach(v=>{m[v.id]=calcL(v,rutas)});return m},[viajes,rutas]);
   const regC=useMemo(()=>{const r=[];viajes.forEach(v=>v.gastos.forEach(g=>{r.push({f:v.fS||v.fP||"",vj:v.cod,tdoc:g.tdoc,ndoc:g.ndoc,prov:g.prov,base:g.base,igv:g.igv,tot:g.tot,cat:g.cat})}));return r.sort((a,b)=>a.f.localeCompare(b.f))},[viajes]);
   const regV=useMemo(()=>{const r=[];viajes.forEach(v=>v.ingresos.forEach(i=>{const c=gCl(i.cli,clis);r.push({f:i.fecha||"",vj:v.cod,tdoc:i.tdoc,sn:`${i.serie}-${i.nro}`,cli:c?.rs,ruc:c?.ruc,base:i.base,igv:i.igv,tot:i.tot,est:i.estado})}));return r.sort((a,b)=>(a.f||"z").localeCompare(b.f||"z"))},[viajes,clis]);
@@ -203,8 +225,19 @@ export default function App(){
           </div>
         </div>}
         {view==="combustible"&&<div style={{animation:"su .2s"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:10}}><div><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>⛽ Compras Combustible Ecuador</h2><div style={{fontSize:9,color:"#F59E0B"}}>Pagadas con bolsa de viaje → Costo se carga al viaje</div></div><button className="bt ba" onClick={()=>setCombModal({mode:"new"})}>+ Compra</button></div>
-          <div className="cd" style={{overflow:"auto"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+            <h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>⛽ Combustible</h2>
+            <div style={{display:"flex",gap:4}}>
+              {combTab==="compras"&&<button className="bt ba" onClick={()=>setCombModal({mode:"new"})}>+ Compra Ecuador</button>}
+              {combTab==="almacen"&&<><button className="bt ba" onClick={()=>setAlmModal({tp:"ENTRADA"})}>+ Entrada</button><button className="bt" style={{borderColor:"#F87171",color:"#F87171"}} onClick={()=>setAlmModal({tp:"SALIDA"})}>- Despacho</button></>}
+            </div>
+          </div>
+          <div style={{display:"flex",gap:0,borderBottom:"1px solid #181E2A",marginBottom:8}}>
+            {[["compras","📦 Compras Ecuador"],["almacen","🏭 Almacén Interno"]].map(([k,la])=><div key={k} className={`tb ${combTab===k?"ac":""}`} onClick={()=>setCombTab(k)}>{la}</div>)}
+          </div>
+          {combTab==="compras"&&<>
+            <div style={{fontSize:9,color:"#F59E0B",marginBottom:6}}>Facturación extranjera — Pagadas con bolsa de viaje</div>
+            <div className="cd" style={{overflow:"auto"}}>
             <table className="tbl"><thead><tr><th>Lote</th><th>Fecha</th><th>Proveedor</th><th>Doc</th><th>Gal</th><th>P.U.$</th><th>TC</th><th>Total S/</th><th>C.U.</th><th>Viaje</th><th></th></tr></thead><tbody>
               {compras.map((c,ci)=>{const vj=viajes.find(v=>v.id===c.vjId);return(<tr key={c.id}>
                 <td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{c.lote}</td><td className="mn" style={{color:"#6B7A8D"}}>{fD(c.fecha)}</td>
@@ -215,6 +248,35 @@ export default function App(){
                 <td style={{whiteSpace:"nowrap"}}><IB i="✏️" t="Editar" onClick={()=>setCombModal({mode:"edit",data:c,idx:ci})}/><IB i="🗑️" c="#F87171" t="Eliminar" onClick={()=>setCfm({t:"compra",id:c.id,l:c.lote})}/></td>
               </tr>)})}
             </tbody></table></div>
+          </>}
+          {combTab==="almacen"&&<>
+            <div style={{fontSize:9,color:"#6B7A8D",marginBottom:8}}>Combustible descargado de viajes INTL para uso en rutas locales — Costo promedio ponderado</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:6,marginBottom:10}}>
+              <div className="cd" style={{padding:10,textAlign:"center",borderTop:"3px solid #F59E0B"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Stock Galones</div><div className="mn" style={{fontSize:20,fontWeight:700,color:"#F59E0B"}}>{fN(almStock.stk)}</div></div>
+              <div className="cd" style={{padding:10,textAlign:"center",borderTop:"3px solid #34D399"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Valor Almacén</div><div className="mn" style={{fontSize:20,fontWeight:700,color:"#34D399"}}>{fS(almStock.val)}</div></div>
+              <div className="cd" style={{padding:10,textAlign:"center",borderTop:"3px solid #93C5FD"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Costo Prom. S//Gal</div><div className="mn" style={{fontSize:20,fontWeight:700,color:"#93C5FD"}}>{fS(almStock.cu)}</div></div>
+              <div className="cd" style={{padding:10,textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Movimientos</div><div className="mn" style={{fontSize:20,fontWeight:700,color:"#6B7A8D"}}>{almMov.length}</div></div>
+            </div>
+            <div style={{fontSize:11,fontWeight:600,color:"#F1F5F9",marginBottom:6}}>📋 Kardex de Almacén</div>
+            <div className="cd" style={{overflow:"auto"}}>
+            <table className="tbl"><thead><tr><th>Fecha</th><th>Tipo</th><th>Ref.</th><th>Viaje/Lote</th><th>Unidad</th><th>Galones</th><th>C.U. S/</th><th>Total S/</th><th>Nota</th></tr></thead><tbody>
+              {[...almMov].sort((a,b)=>b.id-a.id).map(m=>{const u=m.uni?gU(m.uni,unis):null;return(<tr key={m.id}>
+                <td className="mn" style={{color:"#6B7A8D"}}>{fD(m.fecha)}</td>
+                <td><B t={m.tp} bg={m.tp==="ENTRADA"?"#064E3B":"#7F1D1D44"} c={m.tp==="ENTRADA"?"#6EE7B7":"#FCA5A5"}/></td>
+                <td className="mn" style={{fontSize:8,fontWeight:600}}>{m.ref}</td>
+                <td className="mn" style={{fontSize:8,color:"#818CF8"}}>{m.vjRef||"—"}</td>
+                <td className="mn" style={{fontSize:8,color:"#F59E0B"}}>{u?u.pl:"—"}</td>
+                <td className="mn" style={{fontWeight:600,color:m.tp==="ENTRADA"?"#34D399":"#F87171"}}>{m.tp==="ENTRADA"?"+":"-"}{fN(m.gal)}</td>
+                <td className="mn">{fS(m.cuPen)}</td>
+                <td className="mn" style={{fontWeight:600,color:"#F1F5F9"}}>{fS(m.tot)}</td>
+                <td style={{fontSize:8,color:"#6B7A8D",maxWidth:120,overflow:"hidden",textOverflow:"ellipsis"}}>{m.nota}</td>
+              </tr>)})}
+            </tbody></table></div>
+            <div style={{marginTop:6,display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+              <div className="cd" style={{padding:8,textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Total Entradas</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#34D399"}}>{fN(almMov.filter(m=>m.tp==="ENTRADA").reduce((s,m)=>s+m.gal,0))} gal</div></div>
+              <div className="cd" style={{padding:8,textAlign:"center"}}><div style={{fontSize:7,color:"#3E4A5A",textTransform:"uppercase"}}>Total Salidas</div><div className="mn" style={{fontSize:13,fontWeight:700,color:"#F87171"}}>{fN(almMov.filter(m=>m.tp==="SALIDA").reduce((s,m)=>s+m.gal,0))} gal</div></div>
+            </div>
+          </>}
         </div>}
         {view==="liquidacion"&&<div style={{animation:"su .2s"}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}><h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9"}}>💰 Liquidación por Viaje</h2>
@@ -340,11 +402,11 @@ export default function App(){
           <h2 style={{fontSize:14,fontWeight:700,color:"#F1F5F9",marginBottom:10}}>💳 Estado de Cuenta</h2>
           {pnd.pF.length>0&&<><div style={{fontSize:11,fontWeight:600,color:"#A78BFA",marginBottom:6}}>📝 Pendientes de Facturar</div>
           <div className="cd" style={{overflow:"auto",marginBottom:12}}><table className="tbl"><thead><tr><th>Viaje</th><th>Cliente</th><th>Monto</th><th>Estado</th><th>Acción</th></tr></thead><tbody>
-            {pnd.pF.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#A78BFA"}}>{p.vj}</td><td>{p.cli}</td><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{fS(p.tot)}</td><td><B t="PEND.FACT" bg="#3B076444" c="#C4B5FD"/></td><td><button className="bt ba" style={{fontSize:8}} onClick={()=>emitFact(p.vjId,p.iIdx)}>Emitir Factura</button></td></tr>)}
+            {pnd.pF.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#A78BFA"}}>{p.vj}</td><td>{p.cli}</td><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{fS(p.tot)}</td><td><B t="PEND.FACT" bg="#3B076444" c="#C4B5FD"/></td><td><button className="bt ba" style={{fontSize:8}} onClick={()=>setFactModal({vjId:p.vjId,iIdx:p.iIdx,fecha:TODAY,serie:"F001",nro:"",})}>Emitir Factura</button></td></tr>)}
           </tbody></table></div></>}
           {pnd.pC.length>0&&<><div style={{fontSize:11,fontWeight:600,color:"#F87171",marginBottom:6}}>💳 Pendientes de Cobro</div>
           <div className="cd" style={{overflow:"auto",marginBottom:12}}><table className="tbl"><thead><tr><th>Viaje</th><th>Doc.</th><th>Cliente</th><th>Fecha</th><th>Monto</th><th>Acción</th></tr></thead><tbody>
-            {pnd.pC.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{p.vj}</td><td className="mn">{p.sn}</td><td>{p.cli}</td><td className="mn">{fD(p.f)}</td><td className="mn" style={{fontWeight:600,color:"#F87171"}}>{fS(p.tot)}</td><td><button className="bt" style={{fontSize:8}} onClick={()=>regCobro(p.vjId,p.iIdx)}>Registrar Cobro</button></td></tr>)}
+            {pnd.pC.map((p,i)=><tr key={i}><td className="mn" style={{fontWeight:600,color:"#F59E0B"}}>{p.vj}</td><td className="mn">{p.sn}</td><td>{p.cli}</td><td className="mn">{fD(p.f)}</td><td className="mn" style={{fontWeight:600,color:"#F87171"}}>{fS(p.tot)}</td><td><button className="bt" style={{fontSize:8}} onClick={()=>setCobroModal({vjId:p.vjId,iIdx:p.iIdx,fecha:TODAY,cajaId:(cajas[0]?.id||null)})}>Registrar Cobro</button></td></tr>)}
           </tbody></table></div></>}
           <div className="cd" style={{padding:10}}><div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
             {[["Pend.Facturar",st.tPF,"#A78BFA"],["Pend.Cobro",st.tPC,"#F87171"],["Total Recaudar",st.tPC+st.tPF,"#F59E0B"]].map(([l,v,c])=><div key={l} className="bx" style={{textAlign:"center"}}><div style={{fontSize:8,color:"#3E4A5A",textTransform:"uppercase"}}>{l}</div><div className="mn" style={{fontSize:15,fontWeight:700,color:c}}>{fS(v)}</div></div>)}
@@ -422,7 +484,7 @@ export default function App(){
       const needsDet=["ESPERA_CARGA","MANTENIMIENTO","SIN_MOVIMIENTO"].includes(fm.est);
       const bTot=(parseFloat(fm.bolsaPen)||0)+((parseFloat(fm.bolsaUsd)||0)*(parseFloat(fm.bolsaTc)||0));
       const doSave=()=>{
-        if(!fm.tr||!fm.con||!fm.ruta){alert("Complete unidad de transporte, conductor y ruta");return}
+        if(!fm.tr||!fm.con||!fm.ruta){toast("Complete unidad de transporte, conductor y ruta","error");return}
         const d={id:nId,cod:nCod,fP:fm.fP,fS:fm.fS,fL:fm.fL,tr:parseInt(fm.tr),con:parseInt(fm.con),ruta:parseInt(fm.ruta),cli:parseInt(fm.cli)||null,serv:fm.serv,peso:parseFloat(fm.peso)||0,carga:fm.carga,est:fm.est,
           semi:parseInt(fm.semi)||null,contenedor:fm.contenedor||"",otro:fm.otro||"",
           bolsa:{pen:parseFloat(fm.bolsaPen)||0,orPen:ev?.bolsa?.orPen||null,usd:parseFloat(fm.bolsaUsd)||0,orUsd:ev?.bolsa?.orUsd||null,tcUsd:parseFloat(fm.bolsaTc)||3.798,estLiq:ev?.bolsa?.estLiq||"PENDIENTE"},
@@ -528,7 +590,7 @@ export default function App(){
         gastMon=gf.mon==="PEN"?vj?.gastos.filter(g=>g.mon==="PEN").reduce((s,g)=>s+g.tot,0):vj?.gastos.filter(g=>g.mon!=="PEN").reduce((s,g)=>s+g.monto,0),
         dispMon=(bolsaMon||0)-(gastMon||0);
       const GIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
-      const doSaveG=()=>{if(!gf.cat||monto<=0){alert("Complete categoría y monto");return}
+      const doSaveG=()=>{if(!gf.cat||monto<=0){toast("Complete categoría y monto","error");return}
         const g={cat:gf.cat,tdoc:gf.tdoc,ndoc:gf.ndoc,prov:gf.prov,provTdoc:gf.provTdoc,provNdoc:gf.provNdoc,mon:gf.mon,monto,tc,base:Math.round(base*100)/100,igv:Math.round(igv*100)/100,tot:Math.round(totBruto*100)/100};
         if(isEd)updGasto(gastoModal.vjId,gastoModal.idx,g);else addGasto(gastoModal.vjId,g);setGastoModal(null)};
       return(<div className="ov" style={{zIndex:55}} onClick={()=>setGastoModal(null)}><div className="mo" style={{maxWidth:540,padding:16}} onClick={e=>e.stopPropagation()}>
@@ -630,27 +692,27 @@ export default function App(){
         return(<div style={{display:"flex",flexDirection:"column",gap:8}}>
         {quickAdd.type==="unidad"&&<><div><label style={QL}>Placa *</label><input value={quickAdd.fields.pl} onChange={e=>upQ("pl",e.target.value.toUpperCase())} style={QIS} placeholder="Ej: AXX-900"/></div>
           <div><label style={QL}>Marca</label><select value={quickAdd.fields.mk} onChange={e=>upQ("mk",e.target.value)} style={QIS}>{["INTL","VOLVO","KENW","FREIGHT","SCANIA","MACK","OTRO"].map(m=><option key={m}>{m}</option>)}</select></div>
-          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.pl){alert("Ingrese placa");return}addUni(quickAdd.fields)}}>✓ Registrar Unidad</button></>}
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.pl){toast("Ingrese placa","error");return}addUni(quickAdd.fields)}}>✓ Registrar Unidad</button></>}
         {quickAdd.type==="semi"&&<><div><label style={QL}>Placa *</label><input value={quickAdd.fields.pl} onChange={e=>upQ("pl",e.target.value.toUpperCase())} style={QIS} placeholder="Ej: T3S-006"/></div>
           <div><label style={QL}>Tipo</label><select value={quickAdd.fields.tipo} onChange={e=>upQ("tipo",e.target.value)} style={QIS}>{["PLATAFORMA","FURGON","CAMA_BAJA","TOLVA","CISTERNA","PORTACONTENEDOR","OTRO"].map(t=><option key={t}>{t}</option>)}</select></div>
-          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.pl){alert("Ingrese placa");return}addSemi(quickAdd.fields)}}>✓ Registrar Semirremolque</button></>}
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.pl){toast("Ingrese placa","error");return}addSemi(quickAdd.fields)}}>✓ Registrar Semirremolque</button></>}
         {quickAdd.type==="conductor"&&<><div><label style={QL}>Nombre completo *</label><input value={quickAdd.fields.nm} onChange={e=>upQ("nm",e.target.value.toUpperCase())} style={QIS} placeholder="Ej: PEREZ R."/></div>
-          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.nm){alert("Ingrese nombre");return}addCond(quickAdd.fields)}}>✓ Registrar Conductor</button></>}
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.nm){toast("Ingrese nombre","error");return}addCond(quickAdd.fields)}}>✓ Registrar Conductor</button></>}
         {quickAdd.type==="ruta"&&<><div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           <div><label style={QL}>Origen *</label><input value={quickAdd.fields.o} onChange={e=>upQ("o",e.target.value)} style={QIS} placeholder="Ej: Chiclayo"/></div>
           <div><label style={QL}>Destino *</label><input value={quickAdd.fields.d} onChange={e=>upQ("d",e.target.value)} style={QIS} placeholder="Ej: Quito"/></div></div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
           <div><label style={QL}>Tipo</label><select value={quickAdd.fields.tp} onChange={e=>upQ("tp",e.target.value)} style={QIS}><option value="LOCAL">LOCAL</option><option value="INTL">INTL</option></select></div>
           <div><label style={QL}>Km</label><input type="number" value={quickAdd.fields.km} onChange={e=>upQ("km",parseInt(e.target.value)||0)} style={QIS}/></div></div>
-          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.o||!quickAdd.fields.d){alert("Ingrese origen y destino");return}addRuta({...quickAdd.fields,c:(quickAdd.fields.o.slice(0,3)+"-"+quickAdd.fields.d.slice(0,3)).toUpperCase()})}}>✓ Registrar Ruta</button></>}
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.o||!quickAdd.fields.d){toast("Ingrese origen y destino","error");return}addRuta({...quickAdd.fields,c:(quickAdd.fields.o.slice(0,3)+"-"+quickAdd.fields.d.slice(0,3)).toUpperCase()})}}>✓ Registrar Ruta</button></>}
         {quickAdd.type==="cliente"&&<><div><label style={QL}>Razón Social *</label><input value={quickAdd.fields.rs} onChange={e=>upQ("rs",e.target.value)} style={QIS} placeholder="Ej: Empresa SAC"/></div>
           <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
           <div><label style={QL}>RUC / ID Fiscal</label><input value={quickAdd.fields.ruc} onChange={e=>upQ("ruc",e.target.value)} style={QIS}/></div>
           <div><label style={QL}>País</label><select value={quickAdd.fields.pa} onChange={e=>upQ("pa",e.target.value)} style={QIS}><option value="PE">PE</option><option value="EC">EC</option><option value="CO">CO</option></select></div></div>
-          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.rs){alert("Ingrese razón social");return}addCli(quickAdd.fields)}}>✓ Registrar Cliente</button></>}
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.rs){toast("Ingrese razón social","error");return}addCli(quickAdd.fields)}}>✓ Registrar Cliente</button></>}
         {quickAdd.type==="caja"&&<><div><label style={QL}>Nombre *</label><input value={quickAdd.fields.nm} onChange={e=>upQ("nm",e.target.value)} style={QIS} placeholder="Ej: Caja Oficina, BCP Ahorros"/></div>
           <div><label style={QL}>Tipo</label><select value={quickAdd.fields.tipo} onChange={e=>upQ("tipo",e.target.value)} style={QIS}><option value="CAJA">CAJA</option><option value="BANCO">BANCO</option></select></div>
-          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.nm){alert("Ingrese nombre");return}addCaja(quickAdd.fields.nm,quickAdd.fields.tipo);setQuickAdd(null)}}>✓ Registrar Caja/Banco</button></>}
+          <button className="bt ba" onClick={()=>{if(!quickAdd.fields.nm){toast("Ingrese nombre","error");return}addCaja(quickAdd.fields.nm,quickAdd.fields.tipo);setQuickAdd(null)}}>✓ Registrar Caja/Banco</button></>}
         <button className="bt" style={{marginTop:4}} onClick={()=>setQuickAdd(null)}>Cancelar</button>
       </div>)})()}
     </div></div>}
@@ -672,7 +734,7 @@ export default function App(){
           </div>
           <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
             <button className="bt" onClick={()=>setMovModal(null)}>Cancelar</button>
-            <button className="bt ba" onClick={()=>{if(mt<=0||!mf.con){alert("Complete monto y concepto");return}regMov(mf.cId,mf.tp,mf.con,mf.ref,mf.mon,mt);setMovModal(null)}}>Registrar</button>
+            <button className="bt ba" onClick={()=>{if(mt<=0||!mf.con){toast("Complete monto y concepto","error");return}regMov(mf.cId,mf.tp,mf.con,mf.ref,mf.mon,mt);setMovModal(null)}}>Registrar</button>
           </div>
         </div>
       </div></div>)})()}
@@ -704,7 +766,7 @@ export default function App(){
           </div>
           <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
             <button className="bt" onClick={()=>setCombModal(null)}>Cancelar</button>
-            <button className="bt ba" onClick={()=>{if(!cf.prov||parseFloat(cf.gal)<=0){alert("Complete proveedor y galones");return}saveComb({fecha:cf.fecha,prov:cf.prov,tdoc:cf.tdoc||"FACT_EXT",ndoc:cf.ndoc,gal:parseFloat(cf.gal),puUsd:parseFloat(cf.puUsd),totUsd:totU,tc:parseFloat(cf.tc),base:tot,igv:0,tot:tot,cu:cu,lote:cf.lote,vjId:parseInt(cf.vjId)||null},isEd,combModal.idx)}}>Guardar</button>
+            <button className="bt ba" onClick={()=>{if(!cf.prov||parseFloat(cf.gal)<=0){toast("Complete proveedor y galones","error");return}saveComb({fecha:cf.fecha,prov:cf.prov,tdoc:cf.tdoc||"FACT_EXT",ndoc:cf.ndoc,gal:parseFloat(cf.gal),puUsd:parseFloat(cf.puUsd),totUsd:totU,tc:parseFloat(cf.tc),base:tot,igv:0,tot:tot,cu:cu,lote:cf.lote,vjId:parseInt(cf.vjId)||null},isEd,combModal.idx)}}>Guardar</button>
           </div>
         </div>
       </div></div>)})()}
@@ -728,10 +790,76 @@ export default function App(){
           <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Archivo</label><input value={df.arch} onChange={e=>upD("arch",e.target.value)} style={DIS} placeholder="nombre_archivo.pdf"/></div>
           <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
             <button className="bt" onClick={()=>setDocModal(null)}>Cancelar</button>
-            <button className="bt ba" onClick={()=>{if(!df.nro||!df.ent){alert("Complete numero y entidad");return}saveDoc({tipo:df.tipo,nro:df.nro,fecha:df.fecha,ent:df.ent,ref:df.ref,desc:df.desc,arch:df.arch||null},isEd,docModal.idx)}}>Guardar</button>
+            <button className="bt ba" onClick={()=>{if(!df.nro||!df.ent){toast("Complete numero y entidad","error");return}saveDoc({tipo:df.tipo,nro:df.nro,fecha:df.fecha,ent:df.ent,ref:df.ref,desc:df.desc,arch:df.arch||null},isEd,docModal.idx)}}>Guardar</button>
           </div>
         </div>
       </div></div>)})()}
+    {almModal&&(()=>{const isEnt=almModal.tp==="ENTRADA";
+      const af=almModal._f||{gal:0,cuPen:isEnt?0:almStock.cu,ref:isEnt?"LOT-"+String(nxId(compras)).padStart(3,"0"):"DESP-"+String(nxId(almMov)).padStart(3,"0"),vjRef:"",uni:"",nota:""};
+      const upA=(k,v2)=>setAlmModal(p=>({...p,_f:{...(p._f||af),[k]:v2}}));
+      const gl=parseFloat(af.gal)||0;const cu2=isEnt?(parseFloat(af.cuPen)||0):almStock.cu;const tot2=Math.round(gl*cu2*100)/100;
+      const AIS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      return(<div className="ov" style={{zIndex:55}} onClick={()=>setAlmModal(null)}><div className="mo" style={{maxWidth:480,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:isEnt?"#34D399":"#F87171",marginBottom:8}}>{isEnt?"📥 Entrada al Almacén":"📤 Despacho desde Almacén"}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {isEnt&&<div style={{padding:6,background:"#064E3B22",borderRadius:4,fontSize:9,color:"#6EE7B7"}}>Registrar descarga de combustible traído de Ecuador por conductor</div>}
+          {!isEnt&&<div style={{padding:6,background:"#7F1D1D22",borderRadius:4,fontSize:9,color:"#FCA5A5"}}>Despachar combustible a unidad de ruta local — Stock actual: {fN(almStock.stk)} gal — C.U.: {fS(almStock.cu)}</div>}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Galones *</label><input type="number" value={af.gal} onChange={e=>upA("gal",e.target.value)} style={AIS} step="0.01" min="0"/></div>
+            {isEnt&&<div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>C.U. S//Gal *</label><input type="number" value={af.cuPen} onChange={e=>upA("cuPen",e.target.value)} style={AIS} step="0.01"/></div>}
+            {!isEnt&&<div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>C.U. (Prom.)</label><div className="mn" style={{fontSize:12,fontWeight:700,color:"#93C5FD",padding:"5px 0"}}>{fS(almStock.cu)}</div></div>}
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Total S/</label><div className="mn" style={{fontSize:12,fontWeight:700,color:isEnt?"#34D399":"#F87171",padding:"5px 0"}}>{fS(tot2)}</div></div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+            <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Ref./Lote</label><input value={af.ref} onChange={e=>upA("ref",e.target.value)} style={AIS}/></div>
+            {isEnt&&<div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Viaje origen</label><select value={af.vjRef} onChange={e=>upA("vjRef",e.target.value)} style={AIS}><option value="">—</option>{viajes.filter(v=>v.serv==="INTL").map(v=><option key={v.id} value={v.cod}>{v.cod}</option>)}</select></div>}
+            {!isEnt&&<div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Unidad destino</label><select value={af.uni} onChange={e=>upA("uni",parseInt(e.target.value)||"")} style={AIS}><option value="">—</option>{unis.map(u=><option key={u.id} value={u.id}>{u.pl} ({u.mk})</option>)}</select></div>}
+          </div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Nota</label><input value={af.nota} onChange={e=>upA("nota",e.target.value)} style={AIS} placeholder={isEnt?"Descarga conductor...":"Despacho ruta local..."}/></div>
+          {!isEnt&&gl>almStock.stk&&<div style={{padding:4,background:"#7F1D1D",borderRadius:4,fontSize:9,color:"#FCA5A5",textAlign:"center"}}>Stock insuficiente ({fN(almStock.stk)} gal disponibles)</div>}
+          <div style={{display:"flex",gap:8,justifyContent:"flex-end"}}>
+            <button className="bt" onClick={()=>setAlmModal(null)}>Cancelar</button>
+            <button className="bt ba" onClick={()=>{if(gl<=0){toast("Ingrese galones","error");return}if(isEnt&&(parseFloat(af.cuPen)||0)<=0){toast("Ingrese costo unitario","error");return}if(!isEnt&&gl>almStock.stk){toast("Stock insuficiente","error");return}addAlmMov(almModal.tp,gl,isEnt?parseFloat(af.cuPen):almStock.cu,af.ref,af.vjRef||null,parseInt(af.uni)||null,af.nota);setAlmModal(null)}}>{isEnt?"📥 Registrar Entrada":"📤 Registrar Despacho"}</button>
+          </div>
+        </div>
+      </div></div>)})()}
+    
+    {factModal&&(()=>{const v=viajes.find(x=>x.id===factModal.vjId);const ing=v?.ingresos?.[factModal.iIdx];const cli=gCl(ing?.cli,clis);
+      const ff=factModal._f||{serie:factModal.serie||"F001",nro:factModal.nro||"",fecha:factModal.fecha||TODAY};
+      const up=(k,v2)=>setFactModal(p=>({...p,_f:{...(p._f||ff),[k]:v2}}));
+      const IS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      return(<div className="ov" style={{zIndex:60}} onClick={()=>setFactModal(null)}><div className="mo" style={{maxWidth:460,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#A78BFA",marginBottom:8}}>🧾 Emitir Factura — {v?.cod}</div>
+        <div style={{fontSize:10,color:"#B8C4D4",marginBottom:10}}>Cliente: <strong style={{color:"#F1F5F9"}}>{cli?.rs||"—"}</strong> — Total: <strong style={{color:"#F59E0B"}}>{fS(ing?.tot||0)}</strong></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8}}>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Serie *</label><input value={ff.serie} onChange={e=>up("serie",e.target.value)} style={IS} placeholder="F001"/></div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Número *</label><input value={ff.nro} onChange={e=>up("nro",e.target.value)} style={IS} placeholder="00237"/></div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Fecha</label><input type="date" value={ff.fecha} onChange={e=>up("fecha",e.target.value)} style={IS}/></div>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:12}}>
+          <button className="bt" onClick={()=>setFactModal(null)}>Cancelar</button>
+          <button className="bt ba" onClick={()=>{if(!ff.serie||!ff.nro){toast("Complete serie y número","error");return}confirmFact(factModal.vjId,factModal.iIdx,ff.serie,ff.nro,ff.fecha)}}>Emitir</button>
+        </div>
+      </div></div>)})()}
+    {cobroModal&&(()=>{const v=viajes.find(x=>x.id===cobroModal.vjId);const ing=v?.ingresos?.[cobroModal.iIdx];const cli=gCl(ing?.cli,clis);
+      const cf=cobroModal._f||{cajaId:cobroModal.cajaId||"",fecha:cobroModal.fecha||TODAY};
+      const up=(k,v2)=>setCobroModal(p=>({...p,_f:{...(p._f||cf),[k]:v2}}));
+      const IS={width:"100%",padding:"5px 8px",borderRadius:5,border:"1px solid #252D3A",background:"#07080C",color:"#E0E7F0",fontSize:10,fontFamily:"inherit",outline:"none",boxSizing:"border-box"};
+      const mon=ing?.mon||"PEN"; const mt=mon==="USD"?(ing?.monto||0):(ing?.tot||0);
+      return(<div className="ov" style={{zIndex:60}} onClick={()=>setCobroModal(null)}><div className="mo" style={{maxWidth:480,padding:16}} onClick={e=>e.stopPropagation()}>
+        <div style={{fontSize:13,fontWeight:700,color:"#34D399",marginBottom:8}}>💵 Registrar Cobro — {v?.cod}</div>
+        <div style={{fontSize:10,color:"#B8C4D4",marginBottom:10}}>Cliente: <strong style={{color:"#F1F5F9"}}>{cli?.rs||"—"}</strong> — Monto: <strong style={{color:"#F59E0B"}}>{mon==="USD"?"$"+fN(mt):fS(mt)}</strong></div>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:8}}>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Caja destino *</label><select value={cf.cajaId} onChange={e=>up("cajaId",parseInt(e.target.value)||"")} style={IS}><option value="">—</option>{cajas.map(c=><option key={c.id} value={c.id}>{c.nm} ({c.tipo})</option>)}</select></div>
+          <div><label style={{fontSize:8,color:"#3E4A5A",fontWeight:600}}>Fecha</label><input type="date" value={cf.fecha} onChange={e=>up("fecha",e.target.value)} style={IS}/></div>
+        </div>
+        <div style={{display:"flex",gap:8,justifyContent:"flex-end",marginTop:12}}>
+          <button className="bt" onClick={()=>setCobroModal(null)}>Cancelar</button>
+          <button className="bt ba" onClick={()=>{if(!cf.cajaId){toast("Seleccione caja destino","error");return}confirmCobro(cobroModal.vjId,cobroModal.iIdx,parseInt(cf.cajaId),cf.fecha)}}>Registrar</button>
+        </div>
+      </div></div>)})()}
+
+    {toasts.length>0&&<div style={{position:"fixed",right:12,top:12,zIndex:80,display:"flex",flexDirection:"column",gap:8}}>{toasts.map(t=><div key={t.id} style={{minWidth:220,maxWidth:340,padding:"10px 12px",borderRadius:8,background:t.kind==="error"?"#7F1D1D":"#064E3B",color:t.kind==="error"?"#FCA5A5":"#6EE7B7",boxShadow:"0 10px 30px rgba(0,0,0,.35)",fontSize:10,fontWeight:700}}>{t.msg}</div>)}</div>}
     {cfm&&<div className="ov" onClick={()=>setCfm(null)}><div className="mo" style={{maxWidth:400,padding:20}} onClick={e=>e.stopPropagation()}>
       <div style={{fontSize:13,fontWeight:700,color:"#F1F5F9",marginBottom:8}}>⚠️ Confirmar eliminación</div>
       <div style={{fontSize:11,color:"#B8C4D4",marginBottom:16}}>¿Eliminar <strong style={{color:"#F59E0B"}}>{cfm.l}</strong>? Esta acción no se puede deshacer.</div>
